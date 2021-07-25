@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel target="1.7">
+      <module name="Blokkok_ModSys.app" target="11" />
+      <module name="Blokkok_ModSys.module-system" target="11" />
+      <module name="EMSKotlinExample.app" target="11" />
+      <module name="EMSKotlinExample.modulesystem" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

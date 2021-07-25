@@ -1,0 +1,5 @@
+rootProject.name = "Blokkok ModSys"
+include ':app'
+include ':module-system'
+include ':module-interface'
+include ':module-bridge-stub'
