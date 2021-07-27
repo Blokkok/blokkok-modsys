@@ -5,9 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.iyxan23.ems.databinding.ActivityMainBinding
 import com.blokkok.modsys.modinter.communication.Broadcaster
 import com.blokkok.modsys.ModuleManager
+import com.blokkok.modsys.example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 

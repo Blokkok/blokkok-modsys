@@ -6,7 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blokkok.modsys.ModuleManager
-import com.iyxan23.ems.databinding.ActivityModuleManagerBinding
+import com.blokkok.modsys.example.databinding.ActivityModuleManagerBinding
 import java.util.zip.ZipInputStream
 
 class ModuleManagerActivity : AppCompatActivity() {

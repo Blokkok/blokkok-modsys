@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.iyxan23.ems.R
 import com.blokkok.modsys.ModuleManager
 import com.blokkok.modsys.models.ModuleMetadata
 
