@@ -169,6 +169,8 @@ class ModuleLoader {
     private val loadedModules = HashMap<String, Module>()
 
     fun loadModule(module: ModuleMetadata, context: Context) {
+        if (module.id in loadedModules) return
+
         newModuleInstance(module, context)?.let {
             loadedModules[module.name] = it
             it.onLoad()
