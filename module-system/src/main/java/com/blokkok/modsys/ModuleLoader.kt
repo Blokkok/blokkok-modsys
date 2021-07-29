@@ -1,6 +1,5 @@
 package com.blokkok.modsys
 
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.blokkok.modsys.models.ModuleMetadata
@@ -168,10 +167,10 @@ class ModuleLoader {
 
     private val loadedModules = HashMap<String, Module>()
 
-    fun loadModule(module: ModuleMetadata, context: Context) {
+    fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String) {
         if (module.id in loadedModules) return
 
-        newModuleInstance(module, context)?.let {
+        newModuleInstance(module, errorCallback, codeCacheDir)?.let {
             loadedModules[module.name] = it
             it.onLoad()
         }
@@ -220,8 +219,8 @@ class ModuleLoader {
         }
     }
 
-    private fun newModuleInstance(module: ModuleMetadata, context: Context): Module? {
-        val loader = DexClassLoader(module.jarPath, context.codeCacheDir.absolutePath, null, javaClass.classLoader)
+    private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
+        val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)
 
         try {
             val moduleClass = loader.loadClass(module.classpath)
@@ -231,18 +230,11 @@ class ModuleLoader {
             val constructor = moduleClass.getConstructor(ModuleBridge::class.java)
             return constructor.newInstance(bridge) as Module
 
-        } catch (e: Exception) {
-            Toast
-                .makeText(
-                    context,
-                    "Error while loading module \"${module.name}\": ${e.message}",
-                    Toast.LENGTH_SHORT
-                )
-                .show()
+        } catch (e: Error) {
+            errorCallback("Error while loading module \"${module.name}\": ${e.message}")
 
             Log.e(TAG, "Error while loading module \"${module.name}\": ${e.message}")
-            Log.e(TAG, "Full stacktrace: ")
-            e.printStackTrace()
+            Log.e(TAG, "Full stacktrace: ", e)
 
             return null
         }

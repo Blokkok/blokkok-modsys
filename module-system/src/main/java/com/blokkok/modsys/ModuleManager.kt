@@ -106,11 +106,11 @@ object ModuleManager {
     /**
      * Loads all enabled modules
      */
-    fun loadModules(context: Context) {
+    fun loadModules(errorCallback: (String) -> Unit, codeCacheDir: String) {
         val enabledModules = listEnabledModules()
 
         enabledModules.forEach {
-            loader.loadModule(it, context)
+            loader.loadModule(it, errorCallback, codeCacheDir)
         }
     }
 
