@@ -86,23 +86,6 @@ object ModuleManager {
         toggleEnable(id, false)
     }
 
-    private fun toggleEnable(
-        id: String,
-        enabled: Boolean,
-    ) {
-        val metaFile = File(modulesDir, id).resolve("meta.json")
-        val meta = Json.decodeFromString<ModuleMetadata>(metaFile.readText())
-
-        metaFile.writeText(
-            Json.encodeToString(
-                meta.copy(enabled = enabled)
-            )
-        )
-    }
-
-    private fun listEnabledModules(): List<ModuleMetadata> =
-        listModules().values.filter { it.enabled }
-
     /**
      * Loads all enabled modules
      */
@@ -120,6 +103,11 @@ object ModuleManager {
     fun unloadModules() {
         loader.unloadAllModules()
     }
+
+    /**
+     * Returns a list of module ids that are loaded
+     */
+    fun listLoadedModules(): List<String> = loader.listLoadedModules()
 
     /**
      * Imports a module from a zip input stream of a module zip file
@@ -155,6 +143,23 @@ object ModuleManager {
     fun registerCommunications(registerer: ModuleLoader.ModuleBridge.() -> Unit) {
         loader.registerCommunications(registerer)
     }
+
+    private fun toggleEnable(
+        id: String,
+        enabled: Boolean,
+    ) {
+        val metaFile = File(modulesDir, id).resolve("meta.json")
+        val meta = Json.decodeFromString<ModuleMetadata>(metaFile.readText())
+
+        metaFile.writeText(
+            Json.encodeToString(
+                meta.copy(enabled = enabled)
+            )
+        )
+    }
+
+    private fun listEnabledModules(): List<ModuleMetadata> =
+        listModules().values.filter { it.enabled }
 
     private fun unpackZip(
         zipInputStream: ZipInputStream,

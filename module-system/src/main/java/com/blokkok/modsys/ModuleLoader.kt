@@ -195,7 +195,28 @@ class ModuleLoader {
         clearCommunications(moduleId)
     }
 
-    fun isLoaded(moduleId: String) = loadedModules.containsKey(moduleId)
+    fun listLoadedModules(): List<String> = loadedModules.keys.toList()
+
+    private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
+        val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)
+
+        try {
+            val moduleClass = loader.loadClass(module.classpath)
+
+            val bridge = ModuleBridge()
+
+            val constructor = moduleClass.getConstructor(ModuleBridge::class.java)
+            return constructor.newInstance(bridge) as Module
+
+        } catch (e: Error) {
+            errorCallback("Error while loading module \"${module.name}\": ${e.message}")
+
+            Log.e(TAG, "Error while loading module \"${module.name}\": ${e.message}")
+            Log.e(TAG, "Full stacktrace: ", e)
+
+            return null
+        }
+    }
 
     // This function clears the communication of a module
     private fun clearCommunications(moduleId: String) {
@@ -216,27 +237,6 @@ class ModuleLoader {
         registeredBroadcasterSubscribers[moduleId]?.let {
             it.forEach { funcName -> broadcasterSubscribers.remove(funcName) }
             registeredBroadcasterSubscribers.remove(moduleId)
-        }
-    }
-
-    private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
-        val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)
-
-        try {
-            val moduleClass = loader.loadClass(module.classpath)
-
-            val bridge = ModuleBridge()
-
-            val constructor = moduleClass.getConstructor(ModuleBridge::class.java)
-            return constructor.newInstance(bridge) as Module
-
-        } catch (e: Error) {
-            errorCallback("Error while loading module \"${module.name}\": ${e.message}")
-
-            Log.e(TAG, "Error while loading module \"${module.name}\": ${e.message}")
-            Log.e(TAG, "Full stacktrace: ", e)
-
-            return null
         }
     }
 
