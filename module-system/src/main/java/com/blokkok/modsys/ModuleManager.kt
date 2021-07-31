@@ -138,6 +138,19 @@ object ModuleManager {
     }
 
     /**
+     * Unloads the module specified (if it's loaded) then deletes it
+     */
+    fun deleteModule(id: String) {
+        if (id in loader.listLoadedModules()) {
+            // this module is loaded, unload it
+            loader.unloadModule(id)
+        }
+
+        // then just delete the module
+        File(modulesDir, id).deleteRecursively()
+    }
+
+    /**
      * Registers communications so other modules can communicate with the app
      */
     fun registerCommunications(registerer: ModuleLoader.ModuleBridge.() -> Unit) {
