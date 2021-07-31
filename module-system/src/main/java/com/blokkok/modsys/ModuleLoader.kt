@@ -6,6 +6,7 @@ import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.modinter.communication.Broadcaster
 import com.blokkok.modsys.modinter.communication.Stream
+import com.blokkok.modsys.modinter.exception.AlreadyExistsException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
 import dalvik.system.DexClassLoader
 import java.io.IOException
@@ -30,17 +31,31 @@ class ModuleLoader {
 
     @Suppress("unused")
     inner class ModuleBridge {
+
+        // =========================================================================================
+        // Functions used to create stuff
+
         fun registerFunction(name: String, handler: (Array<Any>) -> Any?) {
+            // Check if a function with the same name already exists
+            if (name in registeredFunctions)
+                throw AlreadyExistsException("Function with name $name")
+
             exportedFunctions[name] = handler
             registerFunction(name)
         }
 
         fun registerStream(name: String, streamHandler: Stream.() -> Unit) {
+            if (name in registeredStreams)
+                throw AlreadyExistsException("Stream with name $name")
+
             streams[name] = streamHandler
             registerStream(name)
         }
 
         fun createBroadcaster(name: String): Broadcaster {
+            if (name in registeredBroadcasters)
+                throw AlreadyExistsException("Broadcaster with name $name")
+
             registerBroadcaster(name)
 
             return object : Broadcaster() {
@@ -50,16 +65,19 @@ class ModuleLoader {
             }
         }
 
+        // =========================================================================================
+        // Functions used to do stuff
+
         fun invokeFunction(name: String, vararg args: Any) {
             if (!exportedFunctions.containsKey(name))
-                throw NotDefinedException("exported function", name)
+                throw NotDefinedException("Exported function with the name ", name)
 
             exportedFunctions[name]!!.invoke(args.toList().toTypedArray())
         }
 
         fun openStream(name: String, streamHandler: Stream.() -> Unit) {
             if (!streams.containsKey(name))
-                throw NotDefinedException("stream", name)
+                throw NotDefinedException("Stream with the name ", name)
 
             val ingoingStream: Stream
             var outgoingStream: Stream? = null
@@ -121,6 +139,10 @@ class ModuleLoader {
         }
 
         fun subscribeToBroadcast(name: String, handler: (Array<Any>) -> Unit) {
+            // Check if the broadcast exists
+            if (name in registeredBroadcasters)
+                throw NotDefinedException("Broadcast with the name ", name)
+
             if (!broadcasterSubscribers.containsKey(name))
                 broadcasterSubscribers[name] = ArrayList()
 
@@ -130,6 +152,9 @@ class ModuleLoader {
         }
 
         fun unsubscribeToBroadcast(name: String) {
+            if (name !in broadcasterSubscribers)
+                throw NotDefinedException("Broadcaster subscriber with the name ", name)
+
             broadcasterSubscribers.remove(name)
         }
 
