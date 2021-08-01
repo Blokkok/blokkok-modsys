@@ -13,10 +13,11 @@ import com.blokkok.modsys.namespace.NamespaceResolver
 class CommunicationContext(
     private val namespace: Namespace
 ) {
-    fun createFunction(name: String, handler: (List<String>) -> Unit) {
+    fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isAlphanumeric())
             throw IllegalArgumentException("Function name \"$name\" must be alphanumeric")
+
         // Check if a communication with the same name already exists in the current namespace
         if (name in namespace.communications)
             throw AlreadyDefinedException("Communication with name $name")
@@ -24,7 +25,7 @@ class CommunicationContext(
         namespace.communications[name] = FunctionCommunication(handler)
     }
 
-    fun invokeFunction(name: String, args: List<String>) {
+    fun invokeFunction(name: String, args: List<Any?>): Any? {
         // since this function omits the namespace path, it's trying to invoke a function within the global namespace
         val function = NamespaceResolver.globalNamespace.communications[name]
             ?: throw NotDefinedException("Function with the name", name)
@@ -33,7 +34,7 @@ class CommunicationContext(
         if (function !is FunctionCommunication)
             throw TypeException("Trying to invoke a function named $name, but that communication is a ${function.name}")
 
-        function.handler.invoke(args)
+        return function.handler.invoke(args)
     }
 
     fun namespace(name: String, block: CommunicationContext.() -> Unit) {

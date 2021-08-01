@@ -9,11 +9,11 @@ import java.lang.RuntimeException
 class CommunicationContext(
     private val namespace: Namespace
 ) {
-    fun createFunction(name: String, handler: (List<String>) -> Unit) {
+    fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
-    fun invokeFunction(name: String, args: List<String>) {
+    fun invokeFunction(name: String, args: List<Any?>): Any? {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
