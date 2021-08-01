@@ -1,5 +1,6 @@
 package com.blokkok.modsys.communication
 
+import com.blokkok.modsys.isAlphanumeric
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
 import com.blokkok.modsys.modinter.exception.TypeException
@@ -13,6 +14,9 @@ class CommunicationContext(
     private val namespace: Namespace
 ) {
     fun createFunction(name: String, handler: (List<String>) -> Unit) {
+        // Check if the function name given is not alphanumeric
+        if (!name.isAlphanumeric())
+            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric")
         // Check if a communication with the same name already exists in the current namespace
         if (name in namespace.communications)
             throw AlreadyDefinedException("Communication with name $name")
