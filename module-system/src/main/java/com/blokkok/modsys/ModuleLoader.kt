@@ -22,14 +22,21 @@ object ModuleLoader {
             Namespace(moduleInst.namespace)
         )
 
-        private val communicationBuilder = CommunicationContext(namespace)
+        private val communicationContext = CommunicationContext(namespace)
+
+        // We can't call these functions normally for some reason
+        private val onLoaded = Module::class.java
+            .getMethod("onLoaded", CommunicationContext::class.java)
+
+        private val onUnloaded = Module::class.java
+            .getMethod("onUnloaded", CommunicationContext::class.java)
 
         init {
-            moduleInst.onLoaded(communicationBuilder)
+            onLoaded.invoke(moduleInst, communicationContext)
         }
 
         fun unload() {
-            moduleInst.onUnloaded(communicationBuilder)
+            onUnloaded.invoke(moduleInst, communicationContext)
             namespace.communications.clear()
         }
     }
