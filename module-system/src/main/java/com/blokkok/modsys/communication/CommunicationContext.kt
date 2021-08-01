@@ -37,6 +37,22 @@ class CommunicationContext(
         return function.handler.invoke(args)
     }
 
+    fun invokeFunction(namespace: String, name: String, args: List<Any?>): Any? {
+        // Resolve the namespace where the function we want is living in
+        val functionNamespace = NamespaceResolver.resolveNamespace(namespace)
+            ?: throw NotDefinedException("Namespace with the path", namespace)
+
+        // Check if that function exists in the namespace
+        val function = functionNamespace.communications[name]
+            ?: throw NotDefinedException("Function with the name", name)
+
+        // Check the communication type
+        if (function !is FunctionCommunication)
+            throw TypeException("Trying to invoke a function named $name, but that communication is a ${function.name}")
+
+        return function.handler.invoke(args)
+    }
+
     fun namespace(name: String, block: CommunicationContext.() -> Unit) {
         val builder = CommunicationContext(
             NamespaceResolver.newNamespace(
