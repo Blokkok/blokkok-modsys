@@ -1,8 +1,10 @@
 package com.blokkok.modsys.modinter
 
-import com.blokkok.modsys.ModuleLoader
+import com.blokkok.modsys.communication.CommunicationContext
 
-abstract class Module(bridge: ModuleLoader.ModuleBridge) {
-    abstract fun onLoad()
-    abstract fun onExit()
+abstract class Module {
+    abstract val namespace: String
+
+    abstract fun onLoaded(comContext: CommunicationContext)
+    abstract fun onUnloaded(comContext: CommunicationContext)
 }

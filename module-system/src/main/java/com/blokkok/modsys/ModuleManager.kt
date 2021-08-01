@@ -1,6 +1,7 @@
 package com.blokkok.modsys
 
 import android.content.Context
+import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -41,13 +42,11 @@ object ModuleManager {
     private lateinit var modulesDir: File
 
     private lateinit var cacheDir: File
-    private lateinit var loader: ModuleLoader
 
     fun initialize(context: Context) {
         dataDir = File(context.applicationInfo.dataDir)
         modulesDir = File(dataDir, "modules")
         cacheDir = context.cacheDir
-        loader = ModuleLoader()
 
         if (!modulesDir.exists()) {
             modulesDir.mkdir()
@@ -93,7 +92,7 @@ object ModuleManager {
         val enabledModules = listEnabledModules()
 
         enabledModules.forEach {
-            loader.loadModule(it, errorCallback, codeCacheDir)
+            ModuleLoader.loadModule(it, errorCallback, codeCacheDir)
         }
     }
 
@@ -101,13 +100,13 @@ object ModuleManager {
      * Unloads all modules
      */
     fun unloadModules() {
-        loader.unloadAllModules()
+        ModuleLoader.unloadAllModules()
     }
 
     /**
      * Returns a list of module ids that are loaded
      */
-    fun listLoadedModules(): List<String> = loader.listLoadedModules()
+    fun listLoadedModules(): List<String> = ModuleLoader.listLoadedModules()
 
     /**
      * Imports a module from a zip input stream of a module zip file
@@ -141,9 +140,9 @@ object ModuleManager {
      * Unloads the module specified (if it's loaded) then deletes it
      */
     fun deleteModule(id: String) {
-        if (id in loader.listLoadedModules()) {
+        if (id in ModuleLoader.listLoadedModules()) {
             // this module is loaded, unload it
-            loader.unloadModule(id)
+            ModuleLoader.unloadModule(id)
         }
 
         // then just delete the module
@@ -153,8 +152,8 @@ object ModuleManager {
     /**
      * Registers communications so other modules can communicate with the app
      */
-    fun registerCommunications(registerer: ModuleLoader.ModuleBridge.() -> Unit) {
-        loader.registerCommunications(registerer)
+    fun registerCommunications(registerer: CommunicationContext.() -> Unit) {
+        TODO("ModuleLoader.registerCommunications() is not implemented yet")
     }
 
     private fun toggleEnable(

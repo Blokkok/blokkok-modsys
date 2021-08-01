@@ -2,10 +2,7 @@ package com.blokkok.modsys.example
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.blokkok.modsys.modinter.communication.Broadcaster
 import com.blokkok.modsys.ModuleManager
 import com.blokkok.modsys.example.databinding.ActivityMainBinding
 
@@ -14,7 +11,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     // This broadcaster is used when this activity has started
-    private lateinit var launchBroadcaster: Broadcaster
+//    private lateinit var launchBroadcaster: Broadcaster
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +28,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         ModuleManager.registerCommunications {
+            /* TODO: Add other communications
             launchBroadcaster = createBroadcaster("main_activity_on_launched")
 
             registerFunction("add_text") {
@@ -46,11 +44,12 @@ class MainActivity : AppCompatActivity() {
                     })
                 }
             }
+             */
         }
     }
 
     override fun onStart() {
         super.onStart()
-        launchBroadcaster.broadcast()
+//        launchBroadcaster.broadcast()
     }
 }
