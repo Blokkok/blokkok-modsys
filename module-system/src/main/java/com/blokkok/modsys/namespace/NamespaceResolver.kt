@@ -3,7 +3,7 @@ package com.blokkok.modsys.namespace
 import java.util.*
 
 object NamespaceResolver {
-    val globalNamespace = Namespace("")
+    val globalNamespace = Namespace("<GLOBAL>")
 
     /**
      * Creates a new namespace on the specified path with the specified name
