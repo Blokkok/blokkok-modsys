@@ -42,14 +42,7 @@ class CommunicationContext(
 
     fun invokeFunction(name: String, args: List<Any?> = emptyList()): Any? {
         // since this function omits the namespace path, it's trying to invoke a function within the global namespace
-        val function = NamespaceResolver.globalNamespace.communications[name]
-            ?: throw NotDefinedException("Function with the name", name)
-
-        // Check the communication type
-        if (function !is FunctionCommunication)
-            throw TypeException("Trying to invoke a function named $name, but that communication is a ${function.name}")
-
-        return function.handler.invoke(args)
+        return invokeFunction("/", name, args)
     }
 
     fun invokeFunction(namespace: String, name: String, args: List<Any?> = emptyList()): Any? {
