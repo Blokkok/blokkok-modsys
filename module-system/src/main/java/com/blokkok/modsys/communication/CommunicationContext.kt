@@ -1,5 +1,7 @@
 package com.blokkok.modsys.communication
 
+import com.blokkok.modsys.communication.models.Broadcaster
+import com.blokkok.modsys.communication.models.Subscription
 import com.blokkok.modsys.isAlphanumeric
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
@@ -10,9 +12,22 @@ import com.blokkok.modsys.namespace.NamespaceResolver
 /**
  * Communication API entry point
  */
+@Suppress("unused")
 class CommunicationContext(
     private val namespace: Namespace
 ) {
+    fun namespace(name: String, block: CommunicationContext.() -> Unit) {
+        val builder = CommunicationContext(
+            NamespaceResolver.newNamespace(
+                "",
+                Namespace(name, parent = namespace),
+                namespace
+            )
+        )
+
+        block.invoke(builder)
+    }
+
     fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isAlphanumeric())
@@ -53,15 +68,42 @@ class CommunicationContext(
         return function.handler.invoke(args)
     }
 
-    fun namespace(name: String, block: CommunicationContext.() -> Unit) {
-        val builder = CommunicationContext(
-            NamespaceResolver.newNamespace(
-                "",
-                Namespace(name, parent = namespace),
-                namespace
-            )
-        )
+    fun createBroadcaster(name: String): Broadcaster {
+        val broadcaster = object : Broadcaster() {
+            override fun broadcast(args: List<Any?>) {
+                val broadcastCommunication = (namespace.communications[name] as BroadcastCommunication)
+                for (subscriber in broadcastCommunication.subscribers) {
+                    subscriber.handler.invoke(args)
+                }
+            }
+        }
 
-        block.invoke(builder)
+        namespace.communications[name] = BroadcastCommunication(broadcaster)
+
+        return broadcaster
+    }
+
+    fun subscribeToBroadcast(name: String, handler: (List<Any?>) -> Unit): Subscription =
+        // since this function omits the namespace path, it's trying to subscribe to a broadcast within the global namespace
+        subscribeToBroadcast("/", name, handler)
+
+    fun subscribeToBroadcast(namespace: String, name: String, handler: (List<Any?>) -> Unit): Subscription {
+        // Resolve the namespace where the broadcast we want is living in
+        val broadcastNamespace = NamespaceResolver.resolveNamespace(namespace)
+            ?: throw NotDefinedException("Namespace with the path", namespace)
+
+        // get the broadcast that we wanted
+        val broadcastCom = broadcastNamespace.communications[name]
+            ?: throw NotDefinedException("Broadcast with the name", name)
+
+        // Check the communication type
+        if (broadcastCom !is BroadcastCommunication)
+            throw TypeException("Trying to subscribe to a broadcast named $name, but that communication is a ${broadcastCom.name}")
+
+        val subscription = Subscription(handler, broadcastCom)
+
+        broadcastCom.subscribers.add(subscription)
+
+        return subscription
     }
 }

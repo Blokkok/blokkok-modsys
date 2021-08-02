@@ -4,7 +4,6 @@ import com.blokkok.modsys.models.ModuleManifest
 import com.blokkok.modsys.models.ModuleMetadata
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.lang.StringBuilder
 
 object ModuleManifestParser {
     fun parseManifest(manifest: String): ModuleMetadata =
