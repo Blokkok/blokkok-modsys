@@ -63,10 +63,10 @@ class CommunicationContext(
 
     fun createBroadcaster(name: String): Broadcaster {
         val broadcaster = object : Broadcaster() {
-            override fun broadcast(args: List<Any?>) {
+            override fun broadcast(vararg args: Any?) {
                 val broadcastCommunication = (namespace.communications[name] as BroadcastCommunication)
                 for (subscriber in broadcastCommunication.subscribers) {
-                    subscriber.handler.invoke(args)
+                    subscriber.handler.invoke(args.toList())
                 }
             }
         }
