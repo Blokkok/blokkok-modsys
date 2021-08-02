@@ -1,3 +1,4 @@
 package com.blokkok.modsys
 
-fun String.isAlphanumeric(): Boolean = all { it.isLetterOrDigit() }
+fun String.isCommunicationName(): Boolean =
+    all { it.isLetterOrDigit() || it in listOf('-', '_', '+') }
