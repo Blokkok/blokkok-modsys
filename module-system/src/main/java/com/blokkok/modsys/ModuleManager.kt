@@ -3,6 +3,7 @@ package com.blokkok.modsys
 import android.content.Context
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
+import com.blokkok.modsys.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -150,10 +151,11 @@ object ModuleManager {
     }
 
     /**
-     * Registers communications so other modules can communicate with the app
+     * Execute communications, like creating a function on the global scope, or invoking a function
+     * defined by a module
      */
-    fun registerCommunications(registerer: CommunicationContext.() -> Unit) {
-        TODO("ModuleLoader.registerCommunications() is not implemented yet")
+    fun executeCommunications(block: CommunicationContext.() -> Unit) {
+        block.invoke(CommunicationContext(NamespaceResolver.globalNamespace))
     }
 
     private fun toggleEnable(
