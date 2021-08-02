@@ -11,37 +11,7 @@ import dalvik.system.DexClassLoader
 object ModuleLoader {
     private const val TAG = "ModuleLoader"
 
-    /**
-     * Class that contains a module instance
-     */
-    class ModuleContainer(
-        private val moduleInst: Module
-    ) {
-        private val namespace = NamespaceResolver.newNamespace(
-            "/",
-            Namespace(moduleInst.namespace)
-        )
-
-        private val communicationContext = CommunicationContext(namespace)
-
-        // We can't call these functions normally for some reason
-        private val onLoaded = Module::class.java
-            .getMethod("onLoaded", CommunicationContext::class.java)
-
-        private val onUnloaded = Module::class.java
-            .getMethod("onUnloaded", CommunicationContext::class.java)
-
-        init {
-            onLoaded.invoke(moduleInst, communicationContext)
-        }
-
-        fun unload() {
-            onUnloaded.invoke(moduleInst, communicationContext)
-            namespace.communications.clear()
-        }
-    }
-
-    val loadedModules = HashMap<String, ModuleContainer>()
+    private val loadedModules = HashMap<String, ModuleContainer>()
 
     fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String) {
         if (module.id in loadedModules) return
