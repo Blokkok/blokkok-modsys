@@ -15,7 +15,12 @@ class ModuleContainer(
 
     private val namespace = NamespaceResolver.newNamespace(
         "/",
-        Namespace(moduleInst.namespace)
+        Namespace(
+            if (!moduleInst.namespace.isCommunicationName())
+                throw IllegalArgumentException("Namespace name can only be alphanumeric plus -+_")
+            else
+                moduleInst.namespace
+        )
     )
 
     private val communicationContext = CommunicationContext(namespace)

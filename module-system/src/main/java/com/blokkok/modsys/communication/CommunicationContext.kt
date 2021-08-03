@@ -19,6 +19,9 @@ class CommunicationContext(
     private val claimedFlagIDs = HashMap<String, String>()
 
     fun namespace(name: String, block: CommunicationContext.() -> Unit) {
+        if (!name.isCommunicationName())
+            throw IllegalArgumentException("Namespace can only be alphanumeric plus -+_")
+
         val builder = CommunicationContext(
             NamespaceResolver.newNamespace(
                 "",
