@@ -1,5 +1,6 @@
 package com.blokkok.modsys.communication
 
+import com.blokkok.modsys.capitalizeCompat
 import com.blokkok.modsys.communication.models.Broadcaster
 import com.blokkok.modsys.communication.models.Subscription
 import com.blokkok.modsys.isCommunicationName
@@ -31,11 +32,11 @@ class CommunicationContext(
     fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isCommunicationName())
-            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric")
+            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric or -+_")
 
         // Check if a communication with the same name already exists in the current namespace
         if (name in namespace.communications)
-            throw AlreadyDefinedException("Communication with name $name")
+            throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
 
         namespace.communications[name] = FunctionCommunication(handler)
     }
@@ -62,6 +63,9 @@ class CommunicationContext(
     }
 
     fun createBroadcaster(name: String): Broadcaster {
+        if (name in namespace.communications)
+            throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
+
         val broadcaster = object : Broadcaster() {
             override fun broadcast(vararg args: Any?) {
                 val broadcastCommunication = (namespace.communications[name] as BroadcastCommunication)
