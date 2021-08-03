@@ -146,7 +146,14 @@ class CommunicationContext(
         ingoingStream.connectTo(outgoingStream)
         outgoingStream.connectTo(ingoingStream)
 
-        Thread { streamHandler.invoke(outgoingStream)      }.start()
-        Thread { stream.entryHandler.invoke(ingoingStream) }.start()
+        Thread {
+            streamHandler.invoke(outgoingStream)
+            outgoingStream.close()
+        }.start()
+
+        Thread {
+            stream.entryHandler.invoke(ingoingStream)
+            ingoingStream.close()
+        }.start()
     }
 }
