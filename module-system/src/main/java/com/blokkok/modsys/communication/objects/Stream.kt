@@ -28,7 +28,9 @@ class Stream {
         this.otherStream = otherStream
         this.otherStream!!.listenSend {
             buffer.push(it)
-            recvCondition.signalAll()
+            lock.withLock {
+                recvCondition.signalAll()
+            }
         }
     }
 
