@@ -2,6 +2,8 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
+import com.blokkok.modsys.modinter.exception.FlagAlreadyClaimedException
+import com.blokkok.modsys.modinter.exception.IllegalFlagAccessException
 import com.blokkok.modsys.namespace.Namespace
 
 /**
@@ -39,6 +41,16 @@ class CommunicationContext(
     }
 
     fun subscribeToBroadcast(namespace: String, name: String, handler: (List<Any?>) -> Unit): Subscription {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
+
+    // Flags =======================================================================================
+
+    fun claimFlag(flagName: String) {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
+
+    fun getFlagNamespaces(flagName: String): List<String> {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 }

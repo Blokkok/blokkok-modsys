@@ -1,12 +1,11 @@
 package com.blokkok.modsys.communication
 
+import com.blokkok.modsys.ModuleFlagsManager
 import com.blokkok.modsys.capitalizeCompat
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
-import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
-import com.blokkok.modsys.modinter.exception.NotDefinedException
-import com.blokkok.modsys.modinter.exception.TypeException
+import com.blokkok.modsys.modinter.exception.*
 import com.blokkok.modsys.namespace.Namespace
 import com.blokkok.modsys.namespace.NamespaceResolver
 
@@ -17,6 +16,8 @@ import com.blokkok.modsys.namespace.NamespaceResolver
 class CommunicationContext(
     private val namespace: Namespace
 ) {
+    private val claimedFlagIDs = HashMap<String, String>()
+
     fun namespace(name: String, block: CommunicationContext.() -> Unit) {
         val builder = CommunicationContext(
             NamespaceResolver.newNamespace(
@@ -106,5 +107,24 @@ class CommunicationContext(
         broadcastCom.subscribers.add(subscription)
 
         return subscription
+    }
+
+    // Flags =======================================================================================
+
+    fun claimFlag(flagName: String) {
+        val claimId = ModuleFlagsManager.claimFlag(flagName)
+            ?: throw FlagAlreadyClaimedException(flagName)
+
+        claimedFlagIDs[flagName] = claimId
+    }
+
+    fun getFlagNamespaces(flagName: String): List<String> {
+        if (flagName !in claimedFlagIDs)
+            // this flag has not been claimed
+            throw IllegalFlagAccessException(flagName)
+
+        val modules = ModuleFlagsManager.getModulesWithFlag(flagName, claimedFlagIDs[flagName]!!)!!
+
+        return modules.map { it.namespaceName }
     }
 }

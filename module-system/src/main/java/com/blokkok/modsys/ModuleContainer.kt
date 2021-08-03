@@ -11,6 +11,8 @@ import com.blokkok.modsys.namespace.NamespaceResolver
 class ModuleContainer(
     private val moduleInst: Module
 ) {
+    val namespaceName = moduleInst.namespace
+
     private val namespace = NamespaceResolver.newNamespace(
         "/",
         Namespace(moduleInst.namespace)
@@ -26,6 +28,10 @@ class ModuleContainer(
         .getMethod("onUnloaded", CommunicationContext::class.java)
 
     init {
+        for (flag in moduleInst.flags) {
+            ModuleFlagsManager.putFlag(flag, this)
+        }
+
         onLoaded.invoke(moduleInst, communicationContext)
     }
 
