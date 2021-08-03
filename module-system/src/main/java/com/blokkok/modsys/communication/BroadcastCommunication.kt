@@ -1,7 +1,7 @@
 package com.blokkok.modsys.communication
 
-import com.blokkok.modsys.communication.models.Broadcaster
-import com.blokkok.modsys.communication.models.Subscription
+import com.blokkok.modsys.communication.objects.Broadcaster
+import com.blokkok.modsys.communication.objects.Subscription
 
 data class BroadcastCommunication(
     val broadcaster: Broadcaster,

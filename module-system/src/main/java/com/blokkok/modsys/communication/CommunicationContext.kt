@@ -1,8 +1,9 @@
 package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.capitalizeCompat
-import com.blokkok.modsys.communication.models.Broadcaster
-import com.blokkok.modsys.communication.models.Subscription
+import com.blokkok.modsys.communication.objects.Broadcaster
+import com.blokkok.modsys.communication.objects.Stream
+import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.NotDefinedException

@@ -1,4 +1,4 @@
-package com.blokkok.modsys.communication.models
+package com.blokkok.modsys.communication.objects
 
 import com.blokkok.modsys.communication.BroadcastCommunication
 

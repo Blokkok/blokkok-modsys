@@ -1,4 +1,4 @@
-package com.blokkok.modsys.communication
+package com.blokkok.modsys.communication.objects
 
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
