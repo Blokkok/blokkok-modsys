@@ -29,6 +29,8 @@ class CommunicationContext(
         block.invoke(builder)
     }
 
+    // Functions ===================================================================================
+
     fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isCommunicationName())
@@ -61,6 +63,8 @@ class CommunicationContext(
 
         return function.handler.invoke(args)
     }
+
+    // Broadcast ===================================================================================
 
     fun createBroadcaster(name: String): Broadcaster {
         if (name in namespace.communications)
@@ -103,6 +107,8 @@ class CommunicationContext(
 
         return subscription
     }
+
+    // Streams =====================================================================================
 
     fun createStream(name: String, streamHandler: Stream.() -> Unit) {
         // Check if the name is alphanumeric / -_+
