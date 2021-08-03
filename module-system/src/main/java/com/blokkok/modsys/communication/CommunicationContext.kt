@@ -2,7 +2,6 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.capitalizeCompat
 import com.blokkok.modsys.communication.objects.Broadcaster
-import com.blokkok.modsys.communication.objects.Stream
 import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
@@ -107,53 +106,5 @@ class CommunicationContext(
         broadcastCom.subscribers.add(subscription)
 
         return subscription
-    }
-
-    // Streams =====================================================================================
-
-    fun createStream(name: String, streamHandler: Stream.() -> Unit) {
-        // Check if the name is alphanumeric / -_+
-        if (!name.isCommunicationName())
-            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric or -_+")
-
-        // Check if the name already exists
-        if (name in namespace.communications)
-            throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
-
-        // Alright, let's put the stream
-        namespace.communications[name] = StreamCommunication(streamHandler)
-    }
-
-    fun openStream(name: String, streamHandler: Stream.() -> Unit) =
-        openStream("/", name, streamHandler)
-
-    fun openStream(namespace: String, name: String, streamHandler: Stream.() -> Unit) {
-        // Resolve the namespace where the stream we want is living in
-        val streamNamespace = NamespaceResolver.resolveNamespace(namespace)
-            ?: throw NotDefinedException("Namespace with the path", namespace)
-
-        // Check if that function exists in the namespace
-        val stream = streamNamespace.communications[name]
-            ?: throw NotDefinedException("Function with the name", name)
-
-        // Check the communication type
-        if (stream !is StreamCommunication)
-            throw TypeException("Trying to open a stream named $name, but that communication is a ${stream.name}")
-
-        val ingoingStream  = Stream()
-        val outgoingStream = Stream()
-
-        ingoingStream.connectTo(outgoingStream)
-        outgoingStream.connectTo(ingoingStream)
-
-        Thread {
-            streamHandler.invoke(outgoingStream)
-            outgoingStream.close()
-        }.start()
-
-        Thread {
-            stream.entryHandler.invoke(ingoingStream)
-            ingoingStream.close()
-        }.start()
     }
 }
