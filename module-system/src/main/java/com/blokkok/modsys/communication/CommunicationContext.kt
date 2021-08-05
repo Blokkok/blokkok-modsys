@@ -28,7 +28,7 @@ class CommunicationContext(
         block.invoke(builder)
     }
 
-    fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
+    fun createFunction(name: String, handler: (Map<String, Any>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isCommunicationName())
             throw IllegalArgumentException("Function name \"$name\" must be alphanumeric")
@@ -40,12 +40,12 @@ class CommunicationContext(
         namespace.communications[name] = FunctionCommunication(handler)
     }
 
-    fun invokeFunction(name: String, args: List<Any?> = emptyList()): Any? {
+    fun invokeFunction(name: String, args: Map<String, Any> = emptyMap()): Any? {
         // since this function omits the namespace path, it's trying to invoke a function within the global namespace
         return invokeFunction("/", name, args)
     }
 
-    fun invokeFunction(namespace: String, name: String, args: List<Any?> = emptyList()): Any? {
+    fun invokeFunction(namespace: String, name: String, args: Map<String, Any> = emptyMap()): Any? {
         // Resolve the namespace where the function we want is living in
         val functionNamespace = NamespaceResolver.resolveNamespace(namespace)
             ?: throw NotDefinedException("Namespace with the path", namespace)
