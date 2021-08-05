@@ -150,12 +150,14 @@ object ModuleManager {
         File(modulesDir, id).deleteRecursively()
     }
 
+    private val appCommunicationContext = CommunicationContext(NamespaceResolver.globalNamespace)
+
     /**
      * Execute communications, like creating a function on the global scope, or invoking a function
      * defined by a module
      */
     fun executeCommunications(block: CommunicationContext.() -> Unit) {
-        block.invoke(CommunicationContext(NamespaceResolver.globalNamespace))
+        block.invoke(appCommunicationContext)
     }
 
     private fun toggleEnable(

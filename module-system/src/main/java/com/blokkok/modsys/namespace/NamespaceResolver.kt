@@ -23,8 +23,20 @@ object NamespaceResolver {
         return namespace
     }
 
+    fun deleteNamespace(
+        path: String,
+        relativeNamespace: Namespace? = null
+    ) {
+       val namespace = resolveNamespace(path, relativeNamespace)
+       namespace?.parent?.children?.remove(namespace)
+    }
+
     /**
      * This function traverses the [globalNamespace] variable and tries to find a matching namespace
+     *
+     * @param path Path of the namespace you want to resolve
+     * @param relativeNamespace The relative namespace you want to resolve on, if this is null and
+     *                          the path doesn't start with /, it will use the global namespace instead
      */
     fun resolveNamespace(
         path: String,
@@ -41,10 +53,7 @@ object NamespaceResolver {
         // current namespace will be at the root
         val currentNamespace =
             if (path.startsWith("/")) globalNamespace
-            else relativeNamespace
-                ?: throw NullPointerException(
-                    "relativeNamespace is null when trying to resolve a relative namespace path"
-                )
+            else relativeNamespace ?: globalNamespace
 
         // Check if the size is one, and if that one item is empty
         if (splitPath.size == 1)

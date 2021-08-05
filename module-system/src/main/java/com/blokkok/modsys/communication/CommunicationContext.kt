@@ -1,11 +1,11 @@
 package com.blokkok.modsys.communication
 
-import com.blokkok.modsys.communication.models.Broadcaster
-import com.blokkok.modsys.communication.models.Subscription
+import com.blokkok.modsys.ModuleFlagsManager
+import com.blokkok.modsys.capitalizeCompat
+import com.blokkok.modsys.communication.objects.Broadcaster
+import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
-import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
-import com.blokkok.modsys.modinter.exception.NotDefinedException
-import com.blokkok.modsys.modinter.exception.TypeException
+import com.blokkok.modsys.modinter.exception.*
 import com.blokkok.modsys.namespace.Namespace
 import com.blokkok.modsys.namespace.NamespaceResolver
 
@@ -16,7 +16,12 @@ import com.blokkok.modsys.namespace.NamespaceResolver
 class CommunicationContext(
     private val namespace: Namespace
 ) {
+    private val claimedFlagIDs = HashMap<String, String>()
+
     fun namespace(name: String, block: CommunicationContext.() -> Unit) {
+        if (!name.isCommunicationName())
+            throw IllegalArgumentException("Namespace can only be alphanumeric plus -+_")
+
         val builder = CommunicationContext(
             NamespaceResolver.newNamespace(
                 "",
@@ -28,14 +33,16 @@ class CommunicationContext(
         block.invoke(builder)
     }
 
+    // Functions ===================================================================================
+
     fun createFunction(name: String, handler: (Map<String, Any>) -> Any?) {
         // Check if the function name given is not alphanumeric
         if (!name.isCommunicationName())
-            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric")
+            throw IllegalArgumentException("Function name \"$name\" must be alphanumeric or -+_")
 
         // Check if a communication with the same name already exists in the current namespace
         if (name in namespace.communications)
-            throw AlreadyDefinedException("Communication with name $name")
+            throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
 
         namespace.communications[name] = FunctionCommunication(handler)
     }
@@ -61,12 +68,17 @@ class CommunicationContext(
         return function.handler.invoke(args)
     }
 
+    // Broadcast ===================================================================================
+
     fun createBroadcaster(name: String): Broadcaster {
+        if (name in namespace.communications)
+            throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
+
         val broadcaster = object : Broadcaster() {
-            override fun broadcast(args: List<Any?>) {
+            override fun broadcast(vararg args: Any?) {
                 val broadcastCommunication = (namespace.communications[name] as BroadcastCommunication)
                 for (subscriber in broadcastCommunication.subscribers) {
-                    subscriber.handler.invoke(args)
+                    subscriber.handler.invoke(args.toList())
                 }
             }
         }
@@ -98,5 +110,24 @@ class CommunicationContext(
         broadcastCom.subscribers.add(subscription)
 
         return subscription
+    }
+
+    // Flags =======================================================================================
+
+    fun claimFlag(flagName: String) {
+        val claimId = ModuleFlagsManager.claimFlag(flagName)
+            ?: throw FlagAlreadyClaimedException(flagName)
+
+        claimedFlagIDs[flagName] = claimId
+    }
+
+    fun getFlagNamespaces(flagName: String): List<String> {
+        if (flagName !in claimedFlagIDs)
+            // this flag has not been claimed
+            throw IllegalFlagAccessException(flagName)
+
+        val modules = ModuleFlagsManager.getModulesWithFlag(flagName, claimedFlagIDs[flagName]!!)!!
+
+        return modules.map { it.namespaceName }
     }
 }

@@ -46,6 +46,8 @@ object ModuleLoader {
             throw IllegalArgumentException("The module id given isn't loaded")
 
         loadedModules[moduleId]!!.unload()
+        NamespaceResolver.deleteNamespace(moduleId)
+        loadedModules.remove(moduleId)
     }
 
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()
