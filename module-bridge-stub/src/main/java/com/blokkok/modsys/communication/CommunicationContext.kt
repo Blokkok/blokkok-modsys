@@ -18,15 +18,15 @@ class CommunicationContext(
 
     // Functions ===================================================================================
 
-    fun createFunction(name: String, handler: (List<Any?>) -> Any?) {
+    fun createFunction(name: String, handler: (Map<String, Any>) -> Any?) {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
-    fun invokeFunction(name: String, args: List<Any?> = emptyList()): Any? {
+    fun invokeFunction(name: String, args: Map<String, Any> = emptyMap()): Any? {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
-    fun invokeFunction(namespace: String, name: String, args: List<Any?> = emptyList()): Any? {
+    fun invokeFunction(namespace: String, name: String, args: Map<String, Any> = emptyMap()): Any? {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
