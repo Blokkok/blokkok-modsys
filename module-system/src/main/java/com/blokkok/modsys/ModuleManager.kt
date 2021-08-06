@@ -161,7 +161,10 @@ object ModuleManager {
         File(modulesDir, id).deleteRecursively()
     }
 
-    private val appCommunicationContext = CommunicationContext(NamespaceResolver.globalNamespace)
+    private val appCommunicationContext = CommunicationContext(
+        NamespaceResolver.globalNamespace,
+        ignoreAlreadyDefined = true // because an activity / fragment initialization can be called multiple times
+    )
 
     /**
      * Execute communications, like creating a function on the global scope, or invoking a function
