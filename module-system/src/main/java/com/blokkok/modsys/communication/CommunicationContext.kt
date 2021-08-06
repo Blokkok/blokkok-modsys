@@ -130,8 +130,8 @@ class CommunicationContext(
     // Flags =======================================================================================
 
     fun claimFlag(flagName: String) {
-        val claimId = ModuleFlagsManager.claimFlag(flagName)
-            ?: throw FlagAlreadyClaimedException(flagName)
+        // If the flag is already claimed, just do nothing
+        val claimId = ModuleFlagsManager.claimFlag(flagName) ?: return
 
         claimedFlagIDs[flagName] = claimId
     }
