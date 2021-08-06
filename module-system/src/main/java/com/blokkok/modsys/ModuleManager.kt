@@ -2,6 +2,7 @@ package com.blokkok.modsys
 
 import android.content.Context
 import com.blokkok.modsys.communication.CommunicationContext
+import com.blokkok.modsys.exceptions.IncompatibleModSysVersion
 import com.blokkok.modsys.exceptions.SameIDException
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.namespace.NamespaceResolver
@@ -113,15 +114,16 @@ object ModuleManager {
     /**
      * Imports a module from a zip input stream of a module zip file
      */
-    @Throws(SameIDException::class)
-    fun importModule(zipInputStream: ZipInputStream) {
+    @Throws(SameIDException::class, IncompatibleModSysVersion::class)
+    fun importModule(zipInputStream: ZipInputStream, ignoreLibraryVersion: Boolean = false) {
         val cacheModuleExtractDir = File(cacheDir, "module-extract")
         cacheModuleExtractDir.mkdirs()
 
         unpackZip(zipInputStream, cacheModuleExtractDir)
 
         val parsedManifest = ModuleManifestParser.parseManifest(
-            File(cacheModuleExtractDir, "manifest.json").readText()
+            File(cacheModuleExtractDir, "manifest.json").readText(),
+            ignoreLibraryVersion
         )
 
         val loadedModules = listModules()
