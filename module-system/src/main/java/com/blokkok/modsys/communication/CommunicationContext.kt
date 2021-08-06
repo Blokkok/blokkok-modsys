@@ -33,6 +33,21 @@ class CommunicationContext(
         block.invoke(builder)
     }
 
+    fun getCommunication(name: String): CommunicationType? = getCommunication("/", name)
+
+    fun getCommunication(namespacePath: String, name: String): CommunicationType? {
+        val communication =
+            (NamespaceResolver.resolveNamespace(namespacePath, namespace) ?: return null)
+                .communications[name] ?: return null
+
+        return when (communication) {
+            is FunctionCommunication -> CommunicationType.BROADCAST
+            is BroadcastCommunication -> CommunicationType.FUNCTION
+
+            else -> null
+        }
+    }
+
     // Functions ===================================================================================
 
     fun createFunction(name: String, handler: (Map<String, Any>) -> Any?) {

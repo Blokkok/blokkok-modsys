@@ -16,6 +16,14 @@ class CommunicationContext(
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 
+    fun getCommunication(name: String): CommunicationType? {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
+
+    fun getCommunication(namespacePath: String, name: String): CommunicationType? {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
+
     // Functions ===================================================================================
 
     fun createFunction(name: String, handler: (Map<String, Any>) -> Any?) {
