@@ -2,6 +2,7 @@ package com.blokkok.modsys
 
 import android.content.Context
 import com.blokkok.modsys.communication.CommunicationContext
+import com.blokkok.modsys.exceptions.SameIDException
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
@@ -112,6 +113,7 @@ object ModuleManager {
     /**
      * Imports a module from a zip input stream of a module zip file
      */
+    @Throws(SameIDException::class)
     fun importModule(zipInputStream: ZipInputStream) {
         val cacheModuleExtractDir = File(cacheDir, "module-extract")
         cacheModuleExtractDir.mkdirs()
@@ -121,6 +123,13 @@ object ModuleManager {
         val parsedManifest = ModuleManifestParser.parseManifest(
             File(cacheModuleExtractDir, "manifest.json").readText()
         )
+
+        val loadedModules = listModules()
+
+        // Check if we already have a module with the ID in this manifest
+        if (loadedModules.containsKey(parsedManifest.id))
+            // yes we do have a module with the same id here, throw an exception
+            throw SameIDException(parsedManifest.id, loadedModules[parsedManifest.id]!!.name)
 
         val location = File(modulesDir, parsedManifest.id)
         location.mkdirs()

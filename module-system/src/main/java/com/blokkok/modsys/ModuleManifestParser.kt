@@ -9,7 +9,7 @@ object ModuleManifestParser {
     fun parseManifest(manifest: String): ModuleMetadata =
         Json.decodeFromString<ModuleManifest>(manifest).let {
             ModuleMetadata(
-                it.name.toId(),
+                it.id,
                 it.name,
                 it.description,
                 it.version,
@@ -21,15 +21,3 @@ object ModuleManifestParser {
             )
         }
 }
-
-private fun String.toId(): String =
-    StringBuilder().apply {
-        this@toId.forEach {
-            if (!(it.isLetter()
-                        && it.category != CharCategory.MODIFIER_LETTER
-                        && it.category != CharCategory.OTHER_LETTER)
-            ) {
-                append('_')
-            } else append(it)
-        }
-    }.toString()
