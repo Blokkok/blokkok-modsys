@@ -14,7 +14,8 @@ import com.blokkok.modsys.namespace.NamespaceResolver
  */
 @Suppress("unused")
 class CommunicationContext(
-    private val namespace: Namespace
+    private val namespace: Namespace,
+    private var ignoreAlreadyDefined: Boolean = false
 ) {
     private val claimedFlagIDs = HashMap<String, String>()
 
@@ -56,8 +57,11 @@ class CommunicationContext(
             throw IllegalArgumentException("Function name \"$name\" must be alphanumeric or -+_")
 
         // Check if a communication with the same name already exists in the current namespace
-        if (name in namespace.communications)
+        if (name in namespace.communications) {
+            if (ignoreAlreadyDefined) return
+
             throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
+        }
 
         namespace.communications[name] = FunctionCommunication(handler)
     }
@@ -86,8 +90,12 @@ class CommunicationContext(
     // Broadcast ===================================================================================
 
     fun createBroadcaster(name: String): Broadcaster {
-        if (name in namespace.communications)
+        if (name in namespace.communications) {
+            if (ignoreAlreadyDefined)
+                return (namespace.communications[name] as BroadcastCommunication).broadcaster
+
             throw AlreadyDefinedException("${namespace.communications[name]!!.name.capitalizeCompat()} $name is already defined in the current namespace")
+        }
 
         val broadcaster = object : Broadcaster() {
             override fun broadcast(vararg args: Any?) {
@@ -130,8 +138,8 @@ class CommunicationContext(
     // Flags =======================================================================================
 
     fun claimFlag(flagName: String) {
-        val claimId = ModuleFlagsManager.claimFlag(flagName)
-            ?: throw FlagAlreadyClaimedException(flagName)
+        // If the flag is already claimed, just do nothing
+        val claimId = ModuleFlagsManager.claimFlag(flagName) ?: return
 
         claimedFlagIDs[flagName] = claimId
     }
