@@ -29,8 +29,9 @@ object ModuleManifestParser {
                 it.author,
                 it.website,
                 it.classpath,
-                enabled = false,
-                jarPath = it.jar
+                false,
+                it.jar,
+                it.dependencies
             )
         }
     }
