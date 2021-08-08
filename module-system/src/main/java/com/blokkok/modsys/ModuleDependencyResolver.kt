@@ -64,11 +64,26 @@ class ModuleDependencyResolver(
             }
 
             try {
+                val module = modulesMapped[dependency]
+                    ?:
+                    // If there is no module with this name
+                    // Check if this module is already loaded before
+                    if (ModuleLoader
+                            .listLoadedModulesMetadata()
+                            .find { "${it.name}:${it.version}" == dependency } != null
+                    ) {
+                        // alright, we can skip this then
+                        return@mapNotNull null
+                    } else {
+                        // no, it's not loaded nor is it being loaded
+                        throw ModuleDependencyNotFoundException(rawMeta.name, dependency)
+                    }
+
                 return@mapNotNull resolveChildren(
-                    modulesMapped[dependency]
-                        ?: throw ModuleDependencyNotFoundException(rawMeta.name, dependency),
+                    module,
                     thisNode
                 )
+
             } finally {
                 blacklistedNodes.add(dependency)
             }

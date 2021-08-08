@@ -12,6 +12,7 @@ object ModuleLoader {
     private const val TAG = "ModuleLoader"
 
     private val loadedModules = HashMap<String, ModuleContainer>()
+    private val loadedModulesMetadata = HashMap<String, ModuleMetadata>()
 
     fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String) {
         if (module.id in loadedModules) return
@@ -28,6 +29,7 @@ object ModuleLoader {
             }
 
             loadedModules[module.name] = ModuleContainer(it)
+            loadedModulesMetadata[module.name] = module
         }
     }
 
@@ -37,6 +39,7 @@ object ModuleLoader {
         }
 
         loadedModules.clear()
+        loadedModulesMetadata.clear()
     }
 
     fun unloadModule(module: ModuleMetadata) = unloadModule(module.id)
@@ -48,9 +51,11 @@ object ModuleLoader {
         loadedModules[moduleId]!!.unload()
         NamespaceResolver.deleteNamespace(moduleId)
         loadedModules.remove(moduleId)
+        loadedModulesMetadata.remove(moduleId)
     }
 
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()
+    fun listLoadedModulesMetadata(): List<ModuleMetadata> = loadedModulesMetadata.values.toList()
 
     private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
         val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)
