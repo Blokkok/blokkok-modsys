@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class ModuleManifest(
     val id: String,
     val name: String,
-    @SerialName("library_ver") val libraryVer: String,
+    @SerialName("library_version") val libraryVer: String,
     val description: String,
     val version: String,
     val author: String,
