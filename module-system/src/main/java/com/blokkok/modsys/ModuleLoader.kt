@@ -48,8 +48,9 @@ object ModuleLoader {
         if (!loadedModules.containsKey(moduleId))
             throw IllegalArgumentException("The module id given isn't loaded")
 
-        loadedModules[moduleId]!!.unload()
-        NamespaceResolver.deleteNamespace(moduleId)
+        val module = loadedModules[moduleId]!!
+        NamespaceResolver.deleteNamespace(module.namespaceName)
+        module.unload()
         loadedModules.remove(moduleId)
         loadedModulesMetadata.remove(moduleId)
     }
