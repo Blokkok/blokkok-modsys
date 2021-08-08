@@ -12,4 +12,19 @@ data class Namespace(
     val communications: HashMap<String, Communication> = HashMap(),
     val children: ArrayList<Namespace> = ArrayList(),
     var parent: Namespace? = null,
-)
+) {
+    fun prettyPrint(indentationAmount: Int = 4, indentation: Int = 0, printLine: (String) -> Unit) {
+        val indent = " ".repeat(indentation)
+        printLine("${indent}N $name")
+
+        communications.entries.forEach {
+            printLine("${" ".repeat(indentation + indentationAmount)}C ${it.value.name} \"${it.key}\"")
+        }
+
+        printLine("")
+
+        children.forEach {
+            it.prettyPrint(indentationAmount = indentationAmount, indentation = indentation + indentationAmount, printLine)
+        }
+    }
+}
