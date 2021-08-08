@@ -90,11 +90,18 @@ object ModuleManager {
 
     /**
      * Loads all enabled modules
+     *
+     * @throws ModuleDependencyResolver.ModuleDependencyNotFoundException Will be thrown if a module cannot find it's needed dependency
      */
+    @Throws(ModuleDependencyResolver.ModuleDependencyNotFoundException::class)
     fun loadModules(errorCallback: (String) -> Unit, codeCacheDir: String) {
         val enabledModules = listEnabledModules()
 
-        enabledModules.forEach {
+        // make sure to load them correctly with their dependencies
+        val orderedModules = ModuleDependencyResolver(enabledModules)
+            .orderModules()
+
+        orderedModules.forEach {
             ModuleLoader.loadModule(it, errorCallback, codeCacheDir)
         }
     }
@@ -133,18 +140,22 @@ object ModuleManager {
             // yes we do have a module with the same id here, throw an exception
             throw SameIDException(parsedManifest.id, loadedModules[parsedManifest.id]!!.name)
 
+        // Start moving stuff
         val location = File(modulesDir, parsedManifest.id)
         location.mkdirs()
 
+        // Move the module jar
         val moduleJar = File(cacheModuleExtractDir, parsedManifest.jarPath)
         val moduleJarLocation = File(location, moduleJar.name)
         moduleJar.renameTo(moduleJarLocation)
 
+        // Then put that moved module jar file into the final meta
         val meta = parsedManifest.copy(jarPath = moduleJarLocation.absolutePath)
 
+        // Save it
         File(location, "meta.json").writeText(Json.encodeToString(meta))
 
-        // clean up our mess
+        // Clean up our mess
         cacheModuleExtractDir.deleteRecursively()
     }
 

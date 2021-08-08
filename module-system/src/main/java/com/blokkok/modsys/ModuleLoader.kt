@@ -1,10 +1,8 @@
 package com.blokkok.modsys
 
 import android.util.Log
-import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
-import com.blokkok.modsys.namespace.Namespace
 import com.blokkok.modsys.namespace.NamespaceResolver
 import dalvik.system.DexClassLoader
 
@@ -12,6 +10,7 @@ object ModuleLoader {
     private const val TAG = "ModuleLoader"
 
     private val loadedModules = HashMap<String, ModuleContainer>()
+    private val loadedModulesMetadata = HashMap<String, ModuleMetadata>()
 
     fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String) {
         if (module.id in loadedModules) return
@@ -28,6 +27,7 @@ object ModuleLoader {
             }
 
             loadedModules[module.name] = ModuleContainer(it)
+            loadedModulesMetadata[module.name] = module
         }
     }
 
@@ -37,6 +37,7 @@ object ModuleLoader {
         }
 
         loadedModules.clear()
+        loadedModulesMetadata.clear()
     }
 
     fun unloadModule(module: ModuleMetadata) = unloadModule(module.id)
@@ -45,12 +46,15 @@ object ModuleLoader {
         if (!loadedModules.containsKey(moduleId))
             throw IllegalArgumentException("The module id given isn't loaded")
 
-        loadedModules[moduleId]!!.unload()
-        NamespaceResolver.deleteNamespace(moduleId)
+        val module = loadedModules[moduleId]!!
+        NamespaceResolver.deleteNamespace(module.namespaceName)
+        module.unload()
         loadedModules.remove(moduleId)
+        loadedModulesMetadata.remove(moduleId)
     }
 
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()
+    fun listLoadedModulesMetadata(): List<ModuleMetadata> = loadedModulesMetadata.values.toList()
 
     private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
         val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)

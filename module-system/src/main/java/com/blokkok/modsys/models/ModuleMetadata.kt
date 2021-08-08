@@ -14,4 +14,5 @@ data class ModuleMetadata(
     val classpath: String,
     val enabled: Boolean,
     val jarPath: String,
+    val dependencies: List<String> = emptyList(),
 )

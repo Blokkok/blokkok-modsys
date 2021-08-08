@@ -2,8 +2,6 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
-import com.blokkok.modsys.modinter.exception.FlagAlreadyClaimedException
-import com.blokkok.modsys.modinter.exception.IllegalFlagAccessException
 import com.blokkok.modsys.namespace.Namespace
 
 /**
