@@ -21,11 +21,11 @@ class ModuleDependencyResolver(
         parseToTree()
 
         // and then traverse the tree to get the lowest nodes to be loaded, then up and up and up
-        return ArrayList<ModuleMetadata>().apply {
+        return HashSet<ModuleMetadata>().apply {
             tree.forEach { node ->
                 addAll(traverseNodeChildren(node))
             }
-        }
+        }.toList()
     }
 
     private fun traverseNodeChildren(node: ModuleNode): List<ModuleMetadata> {
@@ -37,6 +37,9 @@ class ModuleDependencyResolver(
             node.children.forEach { childNode ->
                 addAll(traverseNodeChildren(childNode))
             }
+
+            // make sure to also add the parent
+            add(modulesMapped[node.id]!!)
         }
     }
 
