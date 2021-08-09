@@ -76,7 +76,7 @@ class ModuleDependencyResolver(
                         return@mapNotNull null
                     } else {
                         // no, it's not loaded nor is it being loaded
-                        throw ModuleDependencyNotFoundException(rawMeta.name, dependency)
+                        throw ModuleDependencyNotFoundException(dependency, rawMeta.name)
                     }
 
                 return@mapNotNull resolveChildren(
