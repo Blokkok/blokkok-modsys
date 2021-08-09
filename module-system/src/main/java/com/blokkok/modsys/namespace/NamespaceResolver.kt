@@ -62,7 +62,7 @@ object NamespaceResolver {
 
         val firstElem = splitPath.pop()
 
-        for (child in globalNamespace.children) {
+        for (child in currentNamespace.children) {
             if (child.name == firstElem) {
                 // check if we need to go deeper
                 return if (splitPath.isEmpty()) {
@@ -73,7 +73,7 @@ object NamespaceResolver {
                     // call this recursively
                     resolveNamespace(
                         splitPath.toList().joinToString("/"),
-                        currentNamespace
+                        child
                     )
                 }
             }
