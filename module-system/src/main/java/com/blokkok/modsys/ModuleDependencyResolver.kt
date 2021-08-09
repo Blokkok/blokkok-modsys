@@ -9,7 +9,7 @@ import com.blokkok.modsys.models.ModuleMetadata
 class ModuleDependencyResolver(
     private val modules: List<ModuleMetadata>
 ) {
-    private val modulesMapped: Map<String, ModuleMetadata> = modules.associateBy { "${it.name}:${it.version}" }
+    private val modulesMapped: Map<String, ModuleMetadata> = modules.associateBy { "${it.id}:${it.version}" }
     private val blacklistedNodes = ArrayList<String>()
 
     // since dependency trees can be separated from each other, we need a list to store them
