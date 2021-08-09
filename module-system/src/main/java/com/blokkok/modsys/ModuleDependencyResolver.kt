@@ -31,7 +31,7 @@ class ModuleDependencyResolver(
     private fun traverseNodeChildren(node: ModuleNode): List<ModuleMetadata> {
         if (node.children.isEmpty())
             // this node has no children
-            return listOf(modulesMapped[node.name]!!)
+            return listOf(modulesMapped[node.id]!!)
 
         return ArrayList<ModuleMetadata>().apply {
             node.children.forEach { childNode ->
@@ -52,7 +52,7 @@ class ModuleDependencyResolver(
 
     @Throws(ModuleDependencyNotFoundException::class)
     private fun resolveChildren(rawMeta: ModuleMetadata, parent: ModuleNode? = null): ModuleNode {
-        val thisNode = ModuleNode(rawMeta.name, parent = parent)
+        val thisNode = ModuleNode("${rawMeta.id}:${rawMeta.version}", parent = parent)
 
         val nodes: List<ModuleNode> = rawMeta.dependencies.mapNotNull { dependency ->
             if (dependency in blacklistedNodes) {
@@ -95,7 +95,7 @@ class ModuleDependencyResolver(
     }
 
     data class ModuleNode(
-        val name: String,
+        val id: String,
         val children: ArrayList<ModuleNode> = ArrayList(),
         val alreadyPresentChildren: ArrayList<ModuleNode> = ArrayList(),
         var parent: ModuleNode? = null,
