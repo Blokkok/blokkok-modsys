@@ -3,7 +3,9 @@ package com.blokkok.modsys
 import android.content.Context
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.exceptions.IncompatibleModSysVersion
+import com.blokkok.modsys.exceptions.InvalidAssetsFolderLocation
 import com.blokkok.modsys.exceptions.SameIDException
+import com.blokkok.modsys.models.ModuleManifest
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
@@ -121,36 +123,58 @@ object ModuleManager {
     /**
      * Imports a module from a zip input stream of a module zip file
      */
-    @Throws(SameIDException::class, IncompatibleModSysVersion::class)
+    @Throws(
+        SameIDException::class,
+        IncompatibleModSysVersion::class,
+        InvalidAssetsFolderLocation::class,
+    )
     fun importModule(zipInputStream: ZipInputStream, ignoreLibraryVersion: Boolean = false) {
         val cacheModuleExtractDir = File(cacheDir, "module-extract")
         cacheModuleExtractDir.mkdirs()
 
         unpackZip(zipInputStream, cacheModuleExtractDir)
 
-        val parsedManifest = ModuleManifestParser.parseManifest(
-            File(cacheModuleExtractDir, "manifest.json").readText(),
+        val manifest = Json.decodeFromString<ModuleManifest>(
+            File(cacheModuleExtractDir, "manifest.json").readText()
+        )
+
+        val metadata = ModuleManifestParser.parseManifest(
+            manifest,
             ignoreLibraryVersion
         )
 
         val loadedModules = listModules()
 
         // Check if we already have a module with the ID in this manifest
-        if (loadedModules.containsKey(parsedManifest.id))
+        if (loadedModules.containsKey(metadata.id))
             // yes we do have a module with the same id here, throw an exception
-            throw SameIDException(parsedManifest.id, loadedModules[parsedManifest.id]!!.name)
+            throw SameIDException(metadata.id, loadedModules[metadata.id]!!.name)
 
         // Start moving stuff
-        val location = File(modulesDir, parsedManifest.id)
+        val location = File(modulesDir, metadata.id)
         location.mkdirs()
 
         // Move the module jar
-        val moduleJar = File(cacheModuleExtractDir, parsedManifest.jarPath)
+        val moduleJar = File(cacheModuleExtractDir, metadata.jarPath)
         val moduleJarLocation = File(location, moduleJar.name)
         moduleJar.renameTo(moduleJarLocation)
 
+        // Extract assets if it exists
+        if (manifest.assetsFolder != null) {
+            val assetsFolder = File(manifest.assetsFolder)
+
+            // check if it's not some malicious path ("../..", ".", "/", "..")
+            // by checking if this contains inside the cacheModuleExtractDir
+            if (assetsFolder.absoluteFile.startsWith(cacheModuleExtractDir))
+            // nope, it's pointing somewhere suspicious
+                throw InvalidAssetsFolderLocation(manifest.name)
+
+            // ok move the assets folder
+            assetsFolder.renameTo(File(location, assetsFolder.name))
+        }
+
         // Then put that moved module jar file into the final meta
-        val meta = parsedManifest.copy(jarPath = moduleJarLocation.absolutePath)
+        val meta = metadata.copy(jarPath = moduleJarLocation.absolutePath)
 
         // Save it
         File(location, "meta.json").writeText(Json.encodeToString(meta))
@@ -158,6 +182,17 @@ object ModuleManager {
         // Clean up our mess
         cacheModuleExtractDir.deleteRecursively()
     }
+
+    /**
+     * Gets the assets folder of the specified module id
+     */
+    fun getAssetsFolder(moduleId: String): File? =
+        listModules()[moduleId]?.let { meta ->
+            meta.assetsFolder?.let { assetsFolder ->
+                modulesDir.resolve(meta.id).resolve(assetsFolder)
+            }
+        }
+
 
     /**
      * Unloads the module specified (if it's loaded) then deletes it

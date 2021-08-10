@@ -47,6 +47,12 @@ data class ModuleManifest(
     val jar: String,
 
     /**
+     * The assets folder where the module assets are going to be located
+     */
+    @SerialName("assets")
+    val assetsFolder: String? = null,
+
+    /**
      * A list of other module names this module need to run
      *
      * The module name must include it's version separated with `:`

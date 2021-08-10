@@ -1,15 +1,19 @@
 package com.blokkok.modsys
 
 import com.blokkok.modsys.communication.CommunicationContext
+import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.namespace.Namespace
 import com.blokkok.modsys.namespace.NamespaceResolver
+import java.io.File
+import kotlin.time.measureTime
 
 /**
  * Class that contains a module instance
  */
 class ModuleContainer(
-    private val moduleInst: Module
+    private val moduleInst: Module,
+    moduleMetadata: ModuleMetadata,
 ) {
     val namespaceName = moduleInst.namespace
 
@@ -32,9 +36,17 @@ class ModuleContainer(
     private val onUnloaded = Module::class.java
         .getMethod("onUnloaded", CommunicationContext::class.java)
 
+    private val assetsVariable = Module::class.java.getField("assets")
+
     init {
         for (flag in moduleInst.flags) {
             ModuleFlagsManager.putFlag(flag, this)
+        }
+
+        // Set the assets variable
+        ModuleManager.getAssetsFolder(moduleMetadata.id)?.let { assetsFolder ->
+            assetsVariable.isAccessible = true
+            assetsVariable.set(moduleInst, assetsFolder)
         }
 
         onLoaded.invoke(moduleInst, communicationContext)
