@@ -36,6 +36,9 @@ class ModuleContainer(
     private val onUnloaded = Module::class.java
         .getMethod("onUnloaded", CommunicationContext::class.java)
 
+    private val onAllLoaded = Module::class.java
+        .getMethod("onAllLoaded", CommunicationContext::class.java)
+
     private val assetsVariable = Module::class.java.getField("assets")
 
     init {
@@ -50,6 +53,10 @@ class ModuleContainer(
         }
 
         onLoaded.invoke(moduleInst, communicationContext)
+    }
+
+    fun callOnAllLoaded() {
+        onAllLoaded.invoke(moduleInst, communicationContext)
     }
 
     fun unload() {

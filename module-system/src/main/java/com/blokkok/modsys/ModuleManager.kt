@@ -106,6 +106,8 @@ object ModuleManager {
         orderedModules.forEach {
             ModuleLoader.loadModule(it, errorCallback, codeCacheDir)
         }
+
+        ModuleLoader.finishLoadModules()
     }
 
     /**

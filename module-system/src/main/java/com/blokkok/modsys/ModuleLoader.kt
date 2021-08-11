@@ -26,7 +26,7 @@ object ModuleLoader {
                 return
             }
 
-            loadedModules[module.name] = ModuleContainer(it)
+            loadedModules[module.name] = ModuleContainer(it, module)
             loadedModulesMetadata[module.name] = module
         }
     }
@@ -51,6 +51,17 @@ object ModuleLoader {
         module.unload()
         loadedModules.remove(moduleId)
         loadedModulesMetadata.remove(moduleId)
+    }
+
+    /**
+     * This function is called when the [ModuleManager] finished loading all the modules
+     *
+     * This function is used to call onAllLoaded for each and every loaded modules
+     */
+    fun finishLoadModules() {
+        for (value in loadedModules.values) {
+            value.callOnAllLoaded()
+        }
     }
 
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()

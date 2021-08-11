@@ -21,4 +21,12 @@ abstract class Module {
      * This function will be called before this current module is unloaded
      */
     abstract fun onUnloaded(comContext: CommunicationContext)
+
+    /**
+     * This function will be called when every modules has been loaded
+     *
+     * If the user tries to load all modules even though they've had some modules loaded,
+     * this would also get called
+     */
+    open fun onAllLoaded(comContext: CommunicationContext) {}
 }
