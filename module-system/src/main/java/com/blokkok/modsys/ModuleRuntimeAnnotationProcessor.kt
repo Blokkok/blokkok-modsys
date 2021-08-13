@@ -12,9 +12,6 @@ import com.blokkok.modsys.modinter.annotations.Function
  * annotations by the module given
  */
 object ModuleRuntimeAnnotationProcessor {
-
-    // TODO: 8/13/21 Make so that java users can map their function parameters
-
     @SuppressLint("NewApi") // <- false positive
     @Throws(UnsupportedOperationException::class)
     fun process(moduleInst: Module, moduleClass: Class<out Module>): Map<String, Communication> {
@@ -33,10 +30,26 @@ object ModuleRuntimeAnnotationProcessor {
             // since java doesn't support parameter names like kotlin does, we will need to map
             // the parameter names into its parameter index and its type
 
-            // sadly, this can only be done on API level 26+
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) throw UnsupportedOperationException()
+            val params = if (funcAnnotation.paramNames.isEmpty()) {
+                // sadly, this can only be done on API level 26+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) throw UnsupportedOperationException()
 
-            val params = method.parameters.associate { Pair(it.name, it.type) }
+                method.parameters.associate { Pair(it.name, it.type) }
+            } else {
+                // check if the given mapping is correct
+                if (funcAnnotation.paramNames.size != method.parameterCount)
+                    throw IllegalArgumentException(
+                        "paramNames given doesn't have the same length " +
+                        "(${funcAnnotation.paramNames.size}) as the method" +
+                        " (${method.parameterCount}). Method name: ${method.name}"
+                    )
+
+                HashMap<String, Class<*>>().apply {
+                    method.parameterTypes.forEachIndexed { index, clazz ->
+                        put(funcAnnotation.paramNames[index], clazz)
+                    }
+                }
+            }
 
             result[funcName] = FunctionCommunication {
                 // do type checks as well as mapping the arguments
