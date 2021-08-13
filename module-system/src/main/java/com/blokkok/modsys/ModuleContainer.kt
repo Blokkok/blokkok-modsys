@@ -5,8 +5,6 @@ import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.namespace.Namespace
 import com.blokkok.modsys.namespace.NamespaceResolver
-import java.io.File
-import kotlin.time.measureTime
 
 /**
  * Class that contains a module instance
@@ -51,6 +49,13 @@ class ModuleContainer(
             assetsVariable.isAccessible = true
             assetsVariable.set(moduleInst, assetsFolder)
         }
+
+        // process modsys annotations
+        val annotatedComms =
+            ModuleRuntimeAnnotationProcessor.process(moduleInst, moduleInst::class.java)
+
+        // then add those new communications to our namespace
+        namespace.communications.putAll(annotatedComms)
 
         onLoaded.invoke(moduleInst, communicationContext)
     }
