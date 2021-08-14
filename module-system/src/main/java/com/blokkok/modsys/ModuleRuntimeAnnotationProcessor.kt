@@ -49,15 +49,15 @@ object ModuleRuntimeAnnotationProcessor {
                 }
 
                 // then create a function communication based on the name
-                result[funcName] = FunctionCommunication {
+                result[funcName] = FunctionCommunication { funcCallArgs ->
                     // do type checks as well as mapping the parameters
-                    val args = requiredParams.keys.associateWith { param ->
+                    val args = HashMap(requiredParams.keys.associateWith { param ->
                         // kotlin has this instance parameter where you have to pass in the instance
                         // where you wanted the method to be called
                         if (param.kind == KParameter.Kind.INSTANCE)
                             return@associateWith moduleInst
 
-                        val arg = it[param.name]
+                        val arg = funcCallArgs[param.name]
                             ?: throw IllegalArgumentException(
                                 "Argument ${param.name} must be present"
                             )
@@ -69,7 +69,24 @@ object ModuleRuntimeAnnotationProcessor {
                                 "\"${param.type.jvmErasure.java.name}\""
                             )
 
-                        return@associateWith it[param.name]
+                        return@associateWith funcCallArgs[param.name]
+                    })
+
+                    // add optional params if they're passed
+                    for (param in optionalParams.keys) {
+                        // get the param, if it exists. if it doesn't then just skip
+                        val arg: Any = funcCallArgs[param.name] ?: continue
+
+                        // type check!
+                        if (arg.javaClass == param.type.jvmErasure.java)
+                            throw ClassCastException(
+                                "The type of the optional parameter of \"${param.name}\" " +
+                                "(${arg.javaClass.name}) does not have the same type as " +
+                                "\"${param.type.jvmErasure.java.name}\""
+                            )
+
+                        // alright, we're good! add it to the args
+                        args[param] = arg
                     }
 
                     // alright, les go call the function!
