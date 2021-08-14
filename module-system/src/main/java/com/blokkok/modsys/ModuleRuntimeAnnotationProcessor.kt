@@ -68,7 +68,7 @@ object ModuleRuntimeAnnotationProcessor {
                     }
 
                     // alright, les go call the function!
-                    member.call(args)
+                    member.callBy(args)
                 }
             }
 
