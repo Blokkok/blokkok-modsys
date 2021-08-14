@@ -52,6 +52,11 @@ object ModuleRuntimeAnnotationProcessor {
                 result[funcName] = FunctionCommunication {
                     // do type checks as well as mapping the parameters
                     val args = requiredParams.keys.associateWith { param ->
+                        // kotlin has this instance parameter where you have to pass in the instance
+                        // where you wanted the method to be called
+                        if (param.kind == KParameter.Kind.INSTANCE)
+                            return@associateWith moduleInst
+
                         val arg = it[param.name]
                             ?: throw IllegalArgumentException(
                                 "Argument ${param.name} must be present"
