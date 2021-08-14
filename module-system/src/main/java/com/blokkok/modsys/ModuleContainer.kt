@@ -37,17 +37,18 @@ class ModuleContainer(
     private val onAllLoaded = Module::class.java
         .getMethod("onAllLoaded", CommunicationContext::class.java)
 
-    private val assetsVariable = Module::class.java.getDeclaredField("assets")
-
     init {
         for (flag in moduleInst.flags) {
             ModuleFlagsManager.putFlag(flag, this)
         }
 
-        // Set the assets variable
-        ModuleManager.getAssetsFolder(moduleMetadata.id)?.let { assetsFolder ->
-            assetsVariable.isAccessible = true
-            assetsVariable.set(moduleInst, assetsFolder)
+        // Set the assets variable if it exists
+        if (moduleInst::class.java.fields.find { it.name == "assets" } != null) {
+            val assetsVariable = moduleInst::class.java.getField("assets")
+            ModuleManager.getAssetsFolder(moduleMetadata.id)?.let { assetsFolder ->
+                assetsVariable.isAccessible = true
+                assetsVariable.set(moduleInst, assetsFolder)
+            }
         }
 
         // process modsys annotations
