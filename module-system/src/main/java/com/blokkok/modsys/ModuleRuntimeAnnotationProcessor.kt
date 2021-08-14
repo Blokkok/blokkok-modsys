@@ -62,7 +62,7 @@ object ModuleRuntimeAnnotationProcessor {
                                 "Argument ${param.name} must be present"
                             )
 
-                        if (arg.javaClass != param.type.jvmErasure.java)
+                        if (arg.javaClass.isAssignableFrom(param.type.jvmErasure.java))
                             throw ClassCastException(
                                 "The type of the argument of \"${param.name}\" " +
                                 "(${arg.javaClass.name}) does not have the same type as " +
@@ -78,7 +78,7 @@ object ModuleRuntimeAnnotationProcessor {
                         val arg: Any = funcCallArgs[param.name] ?: continue
 
                         // type check!
-                        if (arg.javaClass == param.type.jvmErasure.java)
+                        if (arg.javaClass.isAssignableFrom(param.type.jvmErasure.java))
                             throw ClassCastException(
                                 "The type of the optional parameter of \"${param.name}\" " +
                                 "(${arg.javaClass.name}) does not have the same type as " +
