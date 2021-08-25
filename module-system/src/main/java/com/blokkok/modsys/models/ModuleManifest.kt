@@ -62,7 +62,7 @@ data class ModuleManifest(
      * "dependsOn": ["essentials:1.0.0", "toaster:3.52-44725"]
      * ```
      */
-    @SerialName("dependsOn")
+    @SerialName("depends_on")
     val dependencies: List<String> = emptyList(),
 
     /**
