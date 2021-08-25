@@ -39,7 +39,7 @@ class ModuleContainer(
     private val onAllLoaded = Module::class.java
         .getMethod("onAllLoaded", CommunicationContext::class.java)
 
-    private val assetsVariable = Module::class.java.getField("assets")
+    private val assetsVariable = Module::class.java.getDeclaredField("assets")
 
     init {
         for (flag in moduleInst.flags) {
