@@ -21,7 +21,7 @@ class ModuleDependencyResolver(
         parseToTree()
 
         // and then traverse the tree to get the lowest nodes to be loaded, then up and up and up
-        return HashSet<ModuleMetadata>().apply {
+        return LinkedHashSet<ModuleMetadata>().apply {
             tree.forEach { node ->
                 addAll(traverseNodeChildren(node))
             }
