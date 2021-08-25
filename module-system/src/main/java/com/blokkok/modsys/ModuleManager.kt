@@ -1,6 +1,7 @@
 package com.blokkok.modsys
 
 import android.content.Context
+import android.util.Log
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.exceptions.IncompatibleModSysVersion
 import com.blokkok.modsys.exceptions.InvalidAssetsFolderLocation
@@ -42,6 +43,7 @@ import java.util.zip.ZipInputStream
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 object ModuleManager {
+    private const val TAG = "ModuleManager"
 
     private lateinit var dataDir: File
     private lateinit var modulesDir: File
@@ -62,8 +64,15 @@ object ModuleManager {
      * Returns a list of modules corresponding with it's identifier
      */
     fun listModules(): Map<String, ModuleMetadata> =
-        modulesDir.listFiles()!!.associate {
-            it.name to Json.decodeFromString(File(it, "meta.json").readText())
+        HashMap<String, ModuleMetadata>().apply {
+            modulesDir.listFiles()!!.forEach { folder ->
+                runCatching {
+                    put(folder.name, Json.decodeFromString(File(folder, "meta.json").readText()))
+                }.onFailure {
+                    // TODO: 8/25/21 show some kind of error to the user somehow
+                    Log.e(TAG, "listModules: Cannot read ${folder.name} module's manifest, it might be corrupted", it)
+                }
+            }
         }
 
     /**
