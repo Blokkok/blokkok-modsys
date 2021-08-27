@@ -1,7 +1,7 @@
 package com.blokkok.modsys.modinter.annotations
 
 /**
- * Define a function has a blokkok module communication function
+ * Define a function as a blokkok module communication function
  *
  * Functions annotated with this annotation will get added automatically to the module namespace, or
  * the namespace its in if it's nested inside a `@Namespace` annotated `object` class.
