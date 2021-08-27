@@ -4,7 +4,6 @@ import android.util.Log
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.namespace.NamespaceResolver
-import dalvik.system.DexClassLoader
 
 object ModuleLoader {
     private const val TAG = "ModuleLoader"
@@ -67,8 +66,14 @@ object ModuleLoader {
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()
     fun listLoadedModulesMetadata(): List<ModuleMetadata> = loadedModulesMetadata.values.toList()
 
+    private var multipleDexClassLoader: MultipleDexClassLoader? = null
+
     private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
-        val loader = DexClassLoader(module.jarPath, codeCacheDir, null, javaClass.classLoader)
+        if (multipleDexClassLoader == null) {
+            multipleDexClassLoader = MultipleDexClassLoader(codeCacheDir, null)
+        }
+
+        val loader = multipleDexClassLoader!!.loadDex(module.jarPath)
 
         return try {
             val moduleClass = loader.loadClass(module.classpath)
