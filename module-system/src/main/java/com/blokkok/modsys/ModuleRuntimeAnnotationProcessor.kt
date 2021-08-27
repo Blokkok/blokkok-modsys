@@ -148,18 +148,22 @@ object ModuleRuntimeAnnotationProcessor {
             parentNamespace: NamespaceComm?,
             annotation: Namespace,
         ) {
-            val namespaceName = annotation.name
-
-            // ok, now that we've got the namespace info, let's parse its communications by
-            // recursively calling ourselves
-            val communications = process(member.objectInstance!!)
-
-            // let's add the new namespace to our result
-            result[namespaceName] = NamespaceComm(
+            val namespaceName = if (annotation.name == "") member.simpleName!! else annotation.name
+            val namespace = NamespaceComm(
                 namespaceName,
-                HashMap(communications),
+                HashMap(),
                 parentNamespace
             )
+
+            // ok, now that we've got the namespace info, let's parse its communications by
+            // recursively calling process()
+            val communications = process(member.objectInstance!!, namespace)
+
+            // add all of those communications
+            namespace.communications.putAll(communications)
+
+            // now add the new namespace to our result
+            result[namespaceName] = namespace
         }
     }
 
