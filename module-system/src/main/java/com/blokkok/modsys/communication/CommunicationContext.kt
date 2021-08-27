@@ -9,8 +9,8 @@ import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.IllegalFlagAccessException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
 import com.blokkok.modsys.modinter.exception.TypeException
-import com.blokkok.modsys.namespace.Namespace
-import com.blokkok.modsys.namespace.NamespaceResolver
+import com.blokkok.modsys.communication.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 
 /**
  * Communication API entry point

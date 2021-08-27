@@ -1,4 +1,4 @@
-package com.blokkok.modsys.namespace
+package com.blokkok.modsys.communication.namespace
 
 import java.util.*
 
@@ -13,11 +13,10 @@ object NamespaceResolver {
         namespace: Namespace,
         relativeNamespace: Namespace? = null
     ): Namespace {
-
         val parentNamespace = resolveNamespace(path, relativeNamespace)
             ?: throw NullPointerException("Cannot find namespace at $path")
 
-        parentNamespace.children.add(namespace)
+        parentNamespace.communications[namespace.namespaceName] = namespace
         namespace.parent = parentNamespace
 
         return namespace
@@ -28,7 +27,7 @@ object NamespaceResolver {
         relativeNamespace: Namespace? = null
     ) {
        val namespace = resolveNamespace(path, relativeNamespace)
-       namespace?.parent?.children?.remove(namespace)
+       namespace?.parent?.communications?.remove(namespace.namespaceName)
     }
 
     /**
@@ -62,8 +61,10 @@ object NamespaceResolver {
 
         val firstElem = splitPath.pop()
 
-        for (child in currentNamespace.children) {
-            if (child.name == firstElem) {
+        for (child in currentNamespace.communications.values) {
+            if (child !is Namespace) continue
+
+            if (child.namespaceName == firstElem) {
                 // check if we need to go deeper
                 return if (splitPath.isEmpty()) {
                     // yay this is the namespace we're looking for

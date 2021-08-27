@@ -8,7 +8,7 @@ import com.blokkok.modsys.exceptions.InvalidAssetsFolderLocation
 import com.blokkok.modsys.exceptions.SameIDException
 import com.blokkok.modsys.models.ModuleManifest
 import com.blokkok.modsys.models.ModuleMetadata
-import com.blokkok.modsys.namespace.NamespaceResolver
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

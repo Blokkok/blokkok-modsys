@@ -3,8 +3,8 @@ package com.blokkok.modsys
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
-import com.blokkok.modsys.namespace.Namespace
-import com.blokkok.modsys.namespace.NamespaceResolver
+import com.blokkok.modsys.communication.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 
 /**
  * Class that contains a module instance

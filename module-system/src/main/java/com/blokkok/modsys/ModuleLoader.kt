@@ -3,7 +3,8 @@ package com.blokkok.modsys
 import android.util.Log
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
-import com.blokkok.modsys.namespace.NamespaceResolver
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
+import dalvik.system.DexClassLoader
 
 object ModuleLoader {
     private const val TAG = "ModuleLoader"
@@ -88,4 +89,3 @@ object ModuleLoader {
             null
         }
     }
-}
