@@ -6,12 +6,16 @@ import com.blokkok.modsys.communication.Communication
 import com.blokkok.modsys.communication.FunctionCommunication
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.modinter.annotations.Function
+import com.blokkok.modsys.modinter.annotations.Namespace
 import java.lang.reflect.Method
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.jvmErasure
+
+import com.blokkok.modsys.communication.namespace.Namespace as NamespaceComm
 
 /**
  * This class processes annotations of a module and returns a list of communications defined using
@@ -31,9 +35,9 @@ object ModuleRuntimeAnnotationProcessor {
 
         // then process it, depending on how the module is made in java or kotlin
         return if (isKotlin) {
-            KotlinProcessor.processKotlin(moduleClass, moduleInst)
+            KotlinProcessor.process(moduleInst)
         } else {
-            JavaProcessor.processJava(moduleClass, moduleInst)
+            JavaProcessor.process(moduleClass, moduleInst)
         }
     }
 
@@ -41,31 +45,45 @@ object ModuleRuntimeAnnotationProcessor {
      * Runtime annotation processor for kotlin-made modules
      */
     private object KotlinProcessor {
-        fun processKotlin(
-            moduleClass: Class<out Module>,
-            moduleInst: Module,
+        fun process(
+            instance: Any,
+            parentNamespace: NamespaceComm? = null
         ): Map<String, Communication> {
             val result = HashMap<String, Communication>()
 
+            // Process functions ===================================================================
+
             // alright, since kotlin has optional parameters, name parameters, etc, it's going to be
             // different and easier
-            val clazz = moduleClass.kotlin
+            val instanceClass = instance::class
 
             // loop through each functions of this class
-            for (member in clazz.memberFunctions) {
+            for (member in instanceClass.memberFunctions) {
                 val funcAnnotation = member.findAnnotation<Function>() ?: continue
 
-                processKotlinFunc(funcAnnotation, member, result, moduleInst)
+                processFunc(funcAnnotation, member, result, instance)
+            }
+
+            // Process objects / namespaces ========================================================
+
+            // and also loop through each classes of this class, we're searching for an object class
+            // that contains the @Namespace annotation
+            for (member in instanceClass.nestedClasses) {
+                // check if this class is an object & has the namespace annotation, if not then continue
+                if (member.objectInstance == null) continue
+                val annotation = member.findAnnotation<Namespace>() ?: continue
+
+                processObject(member, result, parentNamespace, annotation)
             }
 
             return result
         }
 
-        private fun processKotlinFunc(
+        private fun processFunc(
             funcAnnotation: Function,
             member: KFunction<*>,
             result: HashMap<String, Communication>,
-            moduleInst: Module,
+            instance: Any,
         ) {
             val funcName = if (funcAnnotation.name == "") member.name else funcAnnotation.name
 
@@ -85,7 +103,7 @@ object ModuleRuntimeAnnotationProcessor {
                     // kotlin has this instance parameter where you have to pass in the instance
                     // where you wanted the method to be called
                     if (param.kind == KParameter.Kind.INSTANCE)
-                        return@associateWith moduleInst
+                        return@associateWith instance
 
                     val arg = funcCallArgs[param.name]
                         ?: throw IllegalArgumentException(
@@ -123,6 +141,26 @@ object ModuleRuntimeAnnotationProcessor {
                 member.callBy(args)
             }
         }
+
+        private fun processObject(
+            member: KClass<*>,
+            result: HashMap<String, Communication>,
+            parentNamespace: NamespaceComm?,
+            annotation: Namespace,
+        ) {
+            val namespaceName = annotation.name
+
+            // ok, now that we've got the namespace info, let's parse its communications by
+            // recursively calling ourselves
+            val communications = process(member.objectInstance!!)
+
+            // let's add the new namespace to our result
+            result[namespaceName] = NamespaceComm(
+                namespaceName,
+                HashMap(communications),
+                parentNamespace
+            )
+        }
     }
 
     /**
@@ -130,7 +168,7 @@ object ModuleRuntimeAnnotationProcessor {
      */
     private object JavaProcessor {
         @Throws(UnsupportedOperationException::class)
-        fun processJava(
+        fun process(
             moduleClass: Class<out Module>,
             moduleInst: Module,
         ): Map<String, Communication> {
@@ -140,7 +178,7 @@ object ModuleRuntimeAnnotationProcessor {
             // annotation is present
             for (method in moduleClass.declaredMethods) {
                 val funcAnnotation = method.getAnnotation(Function::class.java) ?: continue
-                processJavaFunc(funcAnnotation, method, result, moduleInst)
+                processFunc(funcAnnotation, method, result, moduleInst)
             }
 
             return result
@@ -148,7 +186,7 @@ object ModuleRuntimeAnnotationProcessor {
 
         @SuppressLint("NewApi") // <- false positive
         @Throws(UnsupportedOperationException::class)
-        private fun processJavaFunc(
+        private fun processFunc(
             funcAnnotation: Function,
             method: Method,
             result: HashMap<String, Communication>,
