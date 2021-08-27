@@ -7,6 +7,7 @@ import com.blokkok.modsys.namespace.Namespace
 /**
  * Communication API entry point
  */
+@Suppress("unused") // because this is just a stub
 class CommunicationContext(
     private val namespace: Namespace
 ) {
