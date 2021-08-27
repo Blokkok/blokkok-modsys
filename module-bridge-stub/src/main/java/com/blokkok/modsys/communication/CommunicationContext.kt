@@ -2,7 +2,7 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
-import com.blokkok.modsys.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.Namespace
 
 /**
  * Communication API entry point
