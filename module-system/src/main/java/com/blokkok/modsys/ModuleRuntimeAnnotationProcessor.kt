@@ -14,6 +14,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.jvm.jvmName
 
 import com.blokkok.modsys.communication.namespace.Namespace as NamespaceComm
 
@@ -37,7 +38,7 @@ object ModuleRuntimeAnnotationProcessor {
         return if (isKotlin) {
             KotlinProcessor.process(moduleInst)
         } else {
-            JavaProcessor.process(moduleClass, moduleInst)
+            JavaProcessor.process(moduleInst)
         }
     }
 
@@ -173,16 +174,28 @@ object ModuleRuntimeAnnotationProcessor {
     private object JavaProcessor {
         @Throws(UnsupportedOperationException::class)
         fun process(
-            moduleClass: Class<out Module>,
-            moduleInst: Module,
+            instance: Any,
+            parentNamespace: NamespaceComm? = null
         ): Map<String, Communication> {
             val result = HashMap<String, Communication>()
+            val instanceClass = instance::class.java
 
             // loop for each properties in this class and check if the Function or Namespace
             // annotation is present
-            for (method in moduleClass.declaredMethods) {
+            for (method in instanceClass.declaredMethods) {
                 val funcAnnotation = method.getAnnotation(Function::class.java) ?: continue
-                processFunc(funcAnnotation, method, result, moduleInst)
+                processFunc(funcAnnotation, method, result, instance)
+            }
+
+            // now let's parse its namespaces, since java doesn't have object like kotlin does,
+            // java-made modules' functions inside a class can be invoked in two ways:
+            //  - static
+            //  - no-arg constructor
+            // currently, this only supports no-arg constr sadly
+            // TODO: 8/27/21 static methods as func comm
+            for (clazz in instanceClass.classes) {
+                val namespaceAnnotation = clazz.getAnnotation(Namespace::class.java) ?: continue
+                processClass(namespaceAnnotation, clazz, result, parentNamespace)
             }
 
             return result
@@ -194,7 +207,7 @@ object ModuleRuntimeAnnotationProcessor {
             funcAnnotation: Function,
             method: Method,
             result: HashMap<String, Communication>,
-            moduleInst: Module,
+            moduleInst: Any,
         ) {
             val funcName = if (funcAnnotation.name == "") method.name else funcAnnotation.name
 
@@ -244,6 +257,34 @@ object ModuleRuntimeAnnotationProcessor {
                 // alright, les go invoke the function!
                 method.invoke(moduleInst, *args)
             }
+        }
+
+        private fun processClass(
+            namespaceAnnotation: Namespace,
+            clazz: Class<*>,
+            result: HashMap<String, Communication>,
+            parentNamespace: NamespaceComm?,
+        ) {
+            val namespaceName =
+                if (namespaceAnnotation.name == "") clazz.simpleName else namespaceAnnotation.name
+
+            val namespace = NamespaceComm(
+                namespaceName,
+                HashMap(),
+                parentNamespace
+            )
+
+            // we need to instantiate this class
+            val clazzInst = clazz.newInstance()
+
+            // then call process() to process its communications
+            val communications = process(clazzInst, namespace)
+
+            // put all the communications
+            namespace.communications.putAll(communications)
+
+            // finally put it on the results
+            result[namespaceName] = namespace
         }
     }
 }
