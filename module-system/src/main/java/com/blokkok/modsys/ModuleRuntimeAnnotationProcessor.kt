@@ -14,7 +14,6 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.jvm.jvmName
 
 import com.blokkok.modsys.communication.namespace.Namespace as NamespaceComm
 
@@ -111,11 +110,11 @@ object ModuleRuntimeAnnotationProcessor {
                             "Argument ${param.name} must be present"
                         )
 
-                    if (arg.javaClass.isAssignableFrom(param.type.jvmErasure.java))
+                    if (!arg.javaClass.canBePassedTo(param.type.jvmErasure.java))
                         throw ClassCastException(
                             "The type of the argument of \"${param.name}\" " +
-                                    "(${arg.javaClass.name}) does not have the same type as " +
-                                    "\"${param.type.jvmErasure.java.name}\""
+                            "(${arg.javaClass.name}) cannot be fed with the type of the passed " +
+                            "argument \"${param.type.jvmErasure.java.name}\""
                         )
 
                     return@associateWith funcCallArgs[param.name]
@@ -127,11 +126,11 @@ object ModuleRuntimeAnnotationProcessor {
                     val arg: Any = funcCallArgs[param.name] ?: continue
 
                     // type check!
-                    if (arg.javaClass.isAssignableFrom(param.type.jvmErasure.java))
+                    if (!arg.javaClass.canBePassedTo(param.type.jvmErasure.java))
                         throw ClassCastException(
                             "The type of the optional parameter of \"${param.name}\" " +
-                                    "(${arg.javaClass.name}) does not have the same type as " +
-                                    "\"${param.type.jvmErasure.java.name}\""
+                            "(${arg.javaClass.name}) cannot be fed with the type of the passed " +
+                            "argument \"${param.type.jvmErasure.java.name}\""
                         )
 
                     // alright, we're good! add it to the args
@@ -225,8 +224,8 @@ object ModuleRuntimeAnnotationProcessor {
                 if (funcAnnotation.paramNames.size != method.parameterCount)
                     throw IllegalArgumentException(
                         "paramNames given doesn't have the same length " +
-                                "(${funcAnnotation.paramNames.size}) as the method" +
-                                " (${method.parameterCount}). Method name: ${method.name}"
+                        "(${funcAnnotation.paramNames.size}) as the method" +
+                        " (${method.parameterCount}). Method name: ${method.name}"
                     )
 
                 HashMap<String, Class<*>>().apply {
@@ -236,19 +235,20 @@ object ModuleRuntimeAnnotationProcessor {
                 }
             }
 
-            result[funcName] = FunctionCommunication {
+            result[funcName] = FunctionCommunication { passedArgs ->
                 // do type checks as well as mapping the arguments
                 val args = params.map { param ->
-                    val arg = it[param.key]
+                    val arg = passedArgs[param.key]
                         ?: throw IllegalArgumentException(
                             "Argument ${param.key} must be present"
                         )
 
-                    if (arg.javaClass != param.value)
+                    // type check!
+                    if (!arg.javaClass.canBePassedTo(param.value))
                         throw ClassCastException(
                             "The type of the argument of \"${param.key}\" " +
-                                    "(${arg.javaClass.name}) does not have the same type as " +
-                                    "\"${param.value.name}\""
+                            "(${arg.javaClass.name}) cannot be fed with the type of the passed " +
+                            "argument \"${param.value.name}\""
                         )
 
                     return@map param.value
@@ -287,4 +287,42 @@ object ModuleRuntimeAnnotationProcessor {
             result[namespaceName] = namespace
         }
     }
+}
+
+/**
+ * Used to check if a supposed class's instance can be passed into the specified [clazz]
+ */
+private fun Class<*>.canBePassedTo(clazz: Class<*>): Boolean {
+    // first, let's do a simple check
+    if (this == clazz) return true
+
+    // and use java's isAssignableFrom
+    if (this.isAssignableFrom(clazz)) return true
+
+    // if not then check if this class or the clazz is a primitive value
+    if (this.isPrimitive) {
+        // ok, check if clazz is also a primitive value
+        if (clazz.isPrimitive) return true
+
+        // if not then check if clazz has a primitive value
+        clazz.kotlin.javaPrimitiveType?.let {
+            // this has a primitive type! do the type checking!
+            return this.canBePassedTo(it)
+        }
+
+        // if it doesn't then it can't be passed to
+    } else if (clazz.isPrimitive) {
+        // ok, check if clazz is also a primitive value
+        if (this.isPrimitive) return true
+
+        // if not then check if clazz has a primitive value
+        this.kotlin.javaPrimitiveType?.let {
+            // this has a primitive type! do the type checking!
+            return it.canBePassedTo(clazz)
+        }
+
+        // if it doesn't then it can't be passed to
+    }
+
+    return false
 }
