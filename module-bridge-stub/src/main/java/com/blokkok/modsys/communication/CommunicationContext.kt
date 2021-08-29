@@ -170,4 +170,10 @@ class CommunicationContext(
     fun getFlagNamespaces(flagName: String): List<String> {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
+
+    // Extension points ============================================================================
+
+    fun <T> retrieveExtensions(clazz: Class<T>): ArrayList<T>? {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
 }
