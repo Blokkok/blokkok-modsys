@@ -1,4 +1,4 @@
-package com.blokkok.modsys
+package com.blokkok.modsys.annotations.processor
 
 import android.annotation.SuppressLint
 import android.os.Build
@@ -27,7 +27,7 @@ import com.blokkok.modsys.communication.namespace.Namespace as NamespaceComm
  */
 object ModuleRuntimeAnnotationProcessor {
 
-    @Throws(UnsupportedOperationException::class)
+    @Throws(UnsupportedOperationException::class, AnnotationProcessingException::class)
     fun process(
         moduleInst: Module,
         moduleClass: Class<out Module>,
@@ -49,6 +49,7 @@ object ModuleRuntimeAnnotationProcessor {
      * Runtime annotation processor for kotlin-made modules
      */
     private object KotlinProcessor {
+        @Throws(AnnotationProcessingException::class)
         fun process(
             instance: Any,
             parentNamespace: NamespaceComm? = null
@@ -79,6 +80,7 @@ object ModuleRuntimeAnnotationProcessor {
             return result
         }
 
+        @Throws(AnnotationProcessingException::class)
         private fun processFunc(
             funcAnnotation: Function,
             member: KFunction<*>,
@@ -97,7 +99,7 @@ object ModuleRuntimeAnnotationProcessor {
             }
 
             // then create a function communication based on the name
-            result[funcName] = FunctionCommunication { funcCallArgs ->
+            putResult(result, funcName, FunctionCommunication { funcCallArgs ->
                 // do type checks as well as mapping the parameters
                 val args = HashMap(requiredParams.keys.associateWith { param ->
                     // kotlin has this instance parameter where you have to pass in the instance
@@ -139,9 +141,10 @@ object ModuleRuntimeAnnotationProcessor {
 
                 // alright, les go call the function!
                 member.callBy(args)
-            }
+            })
         }
 
+        @Throws(AnnotationProcessingException::class)
         private fun processObject(
             member: KClass<*>,
             result: HashMap<String, Communication>,
@@ -169,7 +172,7 @@ object ModuleRuntimeAnnotationProcessor {
                     namespace.communications.putAll(communications)
 
                     // now add the new namespace to our result
-                    result[namespaceName] = namespace
+                    putResult(result, namespaceName, namespace)
 
                 } else if (member.hasAnnotation<ImplementsExtensionPoint>()) {
                     val annotation = member.findAnnotation<ExtensionPoint>() ?: return
@@ -181,7 +184,7 @@ object ModuleRuntimeAnnotationProcessor {
                 val extPointName =
                     (if (annotation.name.isNotEmpty()) member.simpleName else annotation.name)!!
 
-                result[extPointName] = ExtensionPointCommunication(member.java)
+                putResult(result, extPointName, ExtensionPointCommunication(member.java))
             }
         }
     }
@@ -190,7 +193,7 @@ object ModuleRuntimeAnnotationProcessor {
      * Runtime annotation processor for java-made modules
      */
     private object JavaProcessor {
-        @Throws(UnsupportedOperationException::class)
+        @Throws(UnsupportedOperationException::class, AnnotationProcessingException::class)
         fun process(
             instance: Any,
             parentNamespace: NamespaceComm? = null
@@ -220,7 +223,7 @@ object ModuleRuntimeAnnotationProcessor {
         }
 
         @SuppressLint("NewApi") // <- false positive
-        @Throws(UnsupportedOperationException::class)
+        @Throws(UnsupportedOperationException::class, AnnotationProcessingException::class)
         private fun processFunc(
             funcAnnotation: Function,
             method: Method,
@@ -254,7 +257,7 @@ object ModuleRuntimeAnnotationProcessor {
                 }
             }
 
-            result[funcName] = FunctionCommunication { passedArgs ->
+            putResult(result, funcName, FunctionCommunication { passedArgs ->
                 // do type checks as well as mapping the arguments
                 val args = params.map { param ->
                     val arg = passedArgs[param.key]
@@ -275,9 +278,10 @@ object ModuleRuntimeAnnotationProcessor {
 
                 // alright, les go invoke the function!
                 method.invoke(moduleInst, *args)
-            }
+            })
         }
 
+        @Throws(AnnotationProcessingException::class)
         private fun processClass(
             namespaceAnnotation: Namespace,
             clazz: Class<*>,
@@ -303,8 +307,24 @@ object ModuleRuntimeAnnotationProcessor {
             namespace.communications.putAll(communications)
 
             // finally put it on the results
-            result[namespaceName] = namespace
+            putResult(result, namespaceName, namespace)
         }
+    }
+
+    @Throws(AnnotationProcessingException::class)
+    private fun putResult(
+        result: HashMap<String, Communication>,
+        name: String,
+        value: Communication,
+    ) {
+        if (result.containsKey(name))
+            throw AnnotationProcessingException(
+                "the same communication name \"$name\" already exists in the current namespace. " +
+                "Trying to put the communication ${value.name} with the name \"$name\" but " +
+                "${result[name]!!.name} is already there."
+            )
+
+        result[name] = value
     }
 }
 
