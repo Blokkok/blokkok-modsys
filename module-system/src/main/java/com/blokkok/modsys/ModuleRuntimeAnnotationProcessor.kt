@@ -3,15 +3,19 @@ package com.blokkok.modsys
 import android.annotation.SuppressLint
 import android.os.Build
 import com.blokkok.modsys.communication.Communication
+import com.blokkok.modsys.communication.ExtensionPointCommunication
 import com.blokkok.modsys.communication.FunctionCommunication
 import com.blokkok.modsys.modinter.Module
+import com.blokkok.modsys.modinter.annotations.ExtensionPoint
 import com.blokkok.modsys.modinter.annotations.Function
+import com.blokkok.modsys.modinter.annotations.ImplementsExtensionPoint
 import com.blokkok.modsys.modinter.annotations.Namespace
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.jvmErasure
 
@@ -64,16 +68,12 @@ object ModuleRuntimeAnnotationProcessor {
                 processFunc(funcAnnotation, member, result, instance)
             }
 
-            // Process objects / namespaces ========================================================
+            // Process objects / namespaces (and extension points) =================================
 
-            // and also loop through each classes of this class, we're searching for an object class
-            // that contains the @Namespace annotation
+            // and also loop through each subclasses of this class to find something like
+            // namespaces, extension points, and extension point implementors
             for (member in instanceClass.nestedClasses) {
-                // check if this class is an object & has the namespace annotation, if not then continue
-                if (member.objectInstance == null) continue
-                val annotation = member.findAnnotation<Namespace>() ?: continue
-
-                processObject(member, result, parentNamespace, annotation)
+                processObject(member, result, parentNamespace)
             }
 
             return result
@@ -146,24 +146,43 @@ object ModuleRuntimeAnnotationProcessor {
             member: KClass<*>,
             result: HashMap<String, Communication>,
             parentNamespace: NamespaceComm?,
-            annotation: Namespace,
         ) {
-            val namespaceName = if (annotation.name == "") member.simpleName!! else annotation.name
-            val namespace = NamespaceComm(
-                namespaceName,
-                HashMap(),
-                parentNamespace
-            )
+            // check if this class is an object class
+            if (member.objectInstance != null) {
+                // check for either if this has Namespace or ImplementsExtensionPoint
+                if (member.hasAnnotation<Namespace>()) {
+                    val annotation = member.findAnnotation<Namespace>() ?: return
+                    val namespaceName =
+                        if (annotation.name == "") member.simpleName!! else annotation.name
 
-            // ok, now that we've got the namespace info, let's parse its communications by
-            // recursively calling process()
-            val communications = process(member.objectInstance!!, namespace)
+                    val namespace = NamespaceComm(
+                        namespaceName,
+                        HashMap(),
+                        parentNamespace
+                    )
 
-            // add all of those communications
-            namespace.communications.putAll(communications)
+                    // ok, now that we've got the namespace info, let's parse its communications by
+                    // recursively calling process()
+                    val communications = process(member.objectInstance!!, namespace)
 
-            // now add the new namespace to our result
-            result[namespaceName] = namespace
+                    // add all of those communications
+                    namespace.communications.putAll(communications)
+
+                    // now add the new namespace to our result
+                    result[namespaceName] = namespace
+
+                } else if (member.hasAnnotation<ImplementsExtensionPoint>()) {
+                    val annotation = member.findAnnotation<ExtensionPoint>() ?: return
+                    // TODO: 8/29/21 implement this
+                }
+
+            } else if (member.java.isInterface && member.hasAnnotation<ExtensionPoint>()) {
+                val annotation = member.findAnnotation<ExtensionPoint>() ?: return
+                val extPointName =
+                    (if (annotation.name.isNotEmpty()) member.simpleName else annotation.name)!!
+
+                result[extPointName] = ExtensionPointCommunication(member.java)
+            }
         }
     }
 
