@@ -1,5 +1,6 @@
 package com.blokkok.modsys
 
+import com.blokkok.modsys.annotations.processor.ModuleRuntimeAnnotationProcessor
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
@@ -51,12 +52,14 @@ class ModuleContainer(
             }
         }
 
-        // process modsys annotations
-        val annotatedComms =
-            ModuleRuntimeAnnotationProcessor.process(moduleInst, moduleInst::class.java)
-
-        // then add those new communications to our namespace
-        namespace.communications.putAll(annotatedComms)
+        // process modsys annotations, this function will add the communications on the passed
+        // namespace.communications map
+        ModuleRuntimeAnnotationProcessor
+            .process(
+                moduleInst,
+                moduleInst::class.java,
+                namespace.communications
+            )
 
         onLoaded.invoke(moduleInst, communicationContext)
     }

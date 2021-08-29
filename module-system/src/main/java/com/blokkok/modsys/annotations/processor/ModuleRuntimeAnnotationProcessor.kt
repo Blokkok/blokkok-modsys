@@ -31,17 +31,17 @@ object ModuleRuntimeAnnotationProcessor {
     fun process(
         moduleInst: Module,
         moduleClass: Class<out Module>,
-    ): Map<String, Communication> {
-
+        communications: HashMap<String, Communication>,
+    ) {
         // check if this class is made in kotlin (this will be used to check for optional params and
         // parameter names if this class was made in kotlin)
         val isKotlin = moduleClass.getAnnotation(Metadata::class.java) != null
 
         // then process it, depending on how the module is made in java or kotlin
-        return if (isKotlin) {
-            KotlinProcessor.process(moduleInst)
+        if (isKotlin) {
+            KotlinProcessor.process(moduleInst, communications)
         } else {
-            JavaProcessor.process(moduleInst)
+            JavaProcessor.process(moduleInst, communications)
         }
     }
 
@@ -52,10 +52,9 @@ object ModuleRuntimeAnnotationProcessor {
         @Throws(AnnotationProcessingException::class)
         fun process(
             instance: Any,
-            parentNamespace: NamespaceComm? = null
-        ): Map<String, Communication> {
-            val result = HashMap<String, Communication>()
-
+            communications: HashMap<String, Communication>,
+            parentNamespace: NamespaceComm? = null,
+        ) {
             // Process functions ===================================================================
 
             // alright, since kotlin has optional parameters, name parameters, etc, it's going to be
@@ -66,7 +65,7 @@ object ModuleRuntimeAnnotationProcessor {
             for (member in instanceClass.memberFunctions) {
                 val funcAnnotation = member.findAnnotation<Function>() ?: continue
 
-                processFunc(funcAnnotation, member, result, instance)
+                processFunc(funcAnnotation, member, communications, instance)
             }
 
             // Process objects / namespaces (and extension points) =================================
@@ -74,17 +73,15 @@ object ModuleRuntimeAnnotationProcessor {
             // and also loop through each subclasses of this class to find something like
             // namespaces, extension points, and extension point implementors
             for (member in instanceClass.nestedClasses) {
-                processObject(member, result, parentNamespace)
+                processObject(member, communications, parentNamespace)
             }
-
-            return result
         }
 
         @Throws(AnnotationProcessingException::class)
         private fun processFunc(
             funcAnnotation: Function,
             member: KFunction<*>,
-            result: HashMap<String, Communication>,
+            communications: HashMap<String, Communication>,
             instance: Any,
         ) {
             val funcName = if (funcAnnotation.name == "") member.name else funcAnnotation.name
@@ -99,7 +96,7 @@ object ModuleRuntimeAnnotationProcessor {
             }
 
             // then create a function communication based on the name
-            putResult(result, funcName, FunctionCommunication { funcCallArgs ->
+            putResult(communications, funcName, FunctionCommunication { funcCallArgs ->
                 // do type checks as well as mapping the parameters
                 val args = HashMap(requiredParams.keys.associateWith { param ->
                     // kotlin has this instance parameter where you have to pass in the instance
@@ -147,7 +144,7 @@ object ModuleRuntimeAnnotationProcessor {
         @Throws(AnnotationProcessingException::class)
         private fun processObject(
             member: KClass<*>,
-            result: HashMap<String, Communication>,
+            communications: HashMap<String, Communication>,
             parentNamespace: NamespaceComm?,
         ) {
             // check if this class is an object class
@@ -166,13 +163,14 @@ object ModuleRuntimeAnnotationProcessor {
 
                     // ok, now that we've got the namespace info, let's parse its communications by
                     // recursively calling process()
-                    val communications = process(member.objectInstance!!, namespace)
+                    val nmCommunications = HashMap<String, Communication>()
+                    process(member.objectInstance!!, nmCommunications, namespace)
 
                     // add all of those communications
-                    namespace.communications.putAll(communications)
+                    namespace.communications.putAll(nmCommunications)
 
                     // now add the new namespace to our result
-                    putResult(result, namespaceName, namespace)
+                    putResult(nmCommunications, namespaceName, namespace)
 
                 } else if (member.hasAnnotation<ImplementsExtensionPoint>()) {
                     val annotation = member.findAnnotation<ExtensionPoint>() ?: return
@@ -184,7 +182,7 @@ object ModuleRuntimeAnnotationProcessor {
                 val extPointName =
                     (if (annotation.name.isNotEmpty()) member.simpleName else annotation.name)!!
 
-                putResult(result, extPointName, ExtensionPointCommunication(member.java))
+                putResult(communications, extPointName, ExtensionPointCommunication(member.java))
             }
         }
     }
@@ -196,16 +194,16 @@ object ModuleRuntimeAnnotationProcessor {
         @Throws(UnsupportedOperationException::class, AnnotationProcessingException::class)
         fun process(
             instance: Any,
+            communications: HashMap<String, Communication>,
             parentNamespace: NamespaceComm? = null
-        ): Map<String, Communication> {
-            val result = HashMap<String, Communication>()
+        ) {
             val instanceClass = instance::class.java
 
             // loop for each properties in this class and check if the Function or Namespace
             // annotation is present
             for (method in instanceClass.declaredMethods) {
                 val funcAnnotation = method.getAnnotation(Function::class.java) ?: continue
-                processFunc(funcAnnotation, method, result, instance)
+                processFunc(funcAnnotation, method, communications, instance)
             }
 
             // now let's parse its namespaces, since java doesn't have object like kotlin does,
@@ -216,10 +214,8 @@ object ModuleRuntimeAnnotationProcessor {
             // TODO: 8/27/21 static methods as func comm
             for (clazz in instanceClass.classes) {
                 val namespaceAnnotation = clazz.getAnnotation(Namespace::class.java) ?: continue
-                processClass(namespaceAnnotation, clazz, result, parentNamespace)
+                processClass(namespaceAnnotation, clazz, communications, parentNamespace)
             }
-
-            return result
         }
 
         @SuppressLint("NewApi") // <- false positive
@@ -227,7 +223,7 @@ object ModuleRuntimeAnnotationProcessor {
         private fun processFunc(
             funcAnnotation: Function,
             method: Method,
-            result: HashMap<String, Communication>,
+            communications: HashMap<String, Communication>,
             moduleInst: Any,
         ) {
             val funcName = if (funcAnnotation.name == "") method.name else funcAnnotation.name
@@ -257,7 +253,7 @@ object ModuleRuntimeAnnotationProcessor {
                 }
             }
 
-            putResult(result, funcName, FunctionCommunication { passedArgs ->
+            putResult(communications, funcName, FunctionCommunication { passedArgs ->
                 // do type checks as well as mapping the arguments
                 val args = params.map { param ->
                     val arg = passedArgs[param.key]
@@ -285,7 +281,7 @@ object ModuleRuntimeAnnotationProcessor {
         private fun processClass(
             namespaceAnnotation: Namespace,
             clazz: Class<*>,
-            result: HashMap<String, Communication>,
+            communications: HashMap<String, Communication>,
             parentNamespace: NamespaceComm?,
         ) {
             val namespaceName =
@@ -301,13 +297,14 @@ object ModuleRuntimeAnnotationProcessor {
             val clazzInst = clazz.newInstance()
 
             // then call process() to process its communications
-            val communications = process(clazzInst, namespace)
+            val nmCommunications = HashMap<String, Communication>()
+            process(clazzInst, nmCommunications, namespace)
 
             // put all the communications
-            namespace.communications.putAll(communications)
+            namespace.communications.putAll(nmCommunications)
 
             // finally put it on the results
-            putResult(result, namespaceName, namespace)
+            putResult(communications, namespaceName, namespace)
         }
     }
 
