@@ -1,5 +1,7 @@
 package com.blokkok.modsys
 
+import android.util.Log
+import com.blokkok.modsys.annotations.processor.AnnotationProcessingException
 import com.blokkok.modsys.annotations.processor.ModuleRuntimeAnnotationProcessor
 import com.blokkok.modsys.communication.CommunicationContext
 import com.blokkok.modsys.models.ModuleMetadata
@@ -12,7 +14,7 @@ import com.blokkok.modsys.communication.namespace.NamespaceResolver
  */
 class ModuleContainer(
     private val moduleInst: Module,
-    moduleMetadata: ModuleMetadata,
+    private val moduleMetadata: ModuleMetadata,
 ) {
     val namespaceName = moduleInst.namespace
 
@@ -54,12 +56,29 @@ class ModuleContainer(
 
         // process modsys annotations, this function will add the communications on the passed
         // namespace.communications map
-        ModuleRuntimeAnnotationProcessor
-            .process(
-                moduleInst,
-                moduleInst::class.java,
-                namespace.communications
+        try {
+            ModuleRuntimeAnnotationProcessor
+                .process(
+                    moduleInst,
+                    moduleInst::class.java,
+                    namespace.communications
+                )
+        } catch (e: AnnotationProcessingException) {
+            // TODO: 8/29/21 logging system for modsys
+            Log.e(
+                "ModuleContainer",
+
+                "Failed to process annotation for the module " +
+                "${moduleMetadata.id}:${moduleMetadata.version}", e
             )
+        } catch (e: UnsupportedOperationException) {
+            Log.e(
+                "ModuleContainer",
+
+                "Failed to process annotation for the module " +
+                "${moduleMetadata.id}:${moduleMetadata.version}", e
+            )
+        }
 
         onLoaded.invoke(moduleInst, communicationContext)
     }
