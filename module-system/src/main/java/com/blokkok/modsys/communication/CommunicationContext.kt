@@ -2,16 +2,16 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.ModuleFlagsManager
 import com.blokkok.modsys.capitalizeCompat
+import com.blokkok.modsys.communication.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
+import com.blokkok.modsys.modinter.annotations.ExtensionPoint
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.IllegalFlagAccessException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
 import com.blokkok.modsys.modinter.exception.TypeException
-import com.blokkok.modsys.communication.namespace.Namespace
-import com.blokkok.modsys.communication.namespace.NamespaceResolver
-import com.blokkok.modsys.modinter.annotations.ExtensionPoint
 
 /**
  * Communication API entry point

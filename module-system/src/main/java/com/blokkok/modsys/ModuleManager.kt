@@ -3,12 +3,12 @@ package com.blokkok.modsys
 import android.content.Context
 import android.util.Log
 import com.blokkok.modsys.communication.CommunicationContext
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.exceptions.IncompatibleModSysVersion
 import com.blokkok.modsys.exceptions.InvalidAssetsFolderLocation
 import com.blokkok.modsys.exceptions.SameIDException
 import com.blokkok.modsys.models.ModuleManifest
 import com.blokkok.modsys.models.ModuleMetadata
-import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

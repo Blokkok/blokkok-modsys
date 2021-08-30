@@ -4,10 +4,10 @@ import android.util.Log
 import com.blokkok.modsys.annotations.processor.AnnotationProcessingException
 import com.blokkok.modsys.annotations.processor.ModuleRuntimeAnnotationProcessor
 import com.blokkok.modsys.communication.CommunicationContext
-import com.blokkok.modsys.models.ModuleMetadata
-import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.communication.namespace.Namespace
 import com.blokkok.modsys.communication.namespace.NamespaceResolver
+import com.blokkok.modsys.models.ModuleMetadata
+import com.blokkok.modsys.modinter.Module
 
 /**
  * Class that contains a module instance
