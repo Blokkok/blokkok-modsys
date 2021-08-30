@@ -5,12 +5,14 @@ import android.os.Build
 import com.blokkok.modsys.communication.Communication
 import com.blokkok.modsys.communication.ExtensionPointCommunication
 import com.blokkok.modsys.communication.FunctionCommunication
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.modinter.Module
 import com.blokkok.modsys.modinter.annotations.ExtensionPoint
 import com.blokkok.modsys.modinter.annotations.Function
 import com.blokkok.modsys.modinter.annotations.ImplementsExtensionPoint
 import com.blokkok.modsys.modinter.annotations.Namespace
 import java.lang.reflect.Method
+import java.lang.reflect.Proxy
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -173,8 +175,39 @@ object ModuleRuntimeAnnotationProcessor {
                     putResult(nmCommunications, namespaceName, namespace)
 
                 } else if (member.hasAnnotation<ImplementsExtensionPoint>()) {
-                    val annotation = member.findAnnotation<ExtensionPoint>() ?: return
-                    // TODO: 8/29/21 implement this
+                    val annotation = member.findAnnotation<ImplementsExtensionPoint>() ?: return
+
+                    val namespace = NamespaceResolver.resolveNamespace(annotation.extPointNamespace)
+                        ?: throw AnnotationProcessingException(
+                            "Failed to resolve namespace ${annotation.extPointNamespace} when " +
+                            "trying to process an extension point implementor " +
+                            "\"${annotation.extPointNamespace}/${annotation.extPointName}\""
+                        )
+
+                    val extPoint = namespace.communications[annotation.extPointName]
+                    if (extPoint !is ExtensionPointCommunication)
+                        throw AnnotationProcessingException(
+                            "The communication pointed is not an ExtensionPoint while trying to " +
+                            "resolve an extension point implementor " +
+                            "\"${annotation.extPointNamespace}/${annotation.extPointName}\""
+                        )
+
+                    // TODO: 8/30/21 check if the methods and fields matches with the extension point
+
+                    extPoint.implementors.add(
+                        Proxy.newProxyInstance(
+                            javaClass.classLoader,
+                            arrayOf(member.java)
+                        ) { obj, method, args ->
+                            val specMethod = extPoint.spec
+                                .getDeclaredMethod(
+                                    method.name,
+                                    *args.map { it.javaClass }.toTypedArray()
+                                )
+
+                            specMethod.invoke(obj, *args)
+                        }
+                    )
                 }
 
             } else if (member.java.isInterface && member.hasAnnotation<ExtensionPoint>()) {
