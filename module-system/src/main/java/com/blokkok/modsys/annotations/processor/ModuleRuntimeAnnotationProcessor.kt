@@ -16,9 +16,8 @@ import java.lang.reflect.Proxy
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.full.*
+import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
 import com.blokkok.modsys.communication.namespace.Namespace as NamespaceComm
@@ -192,30 +191,60 @@ object ModuleRuntimeAnnotationProcessor {
                             "\"${annotation.extPointNamespace}/${annotation.extPointName}\""
                         )
 
-                    // TODO: 8/30/21 check if the methods and fields matches with the extension point
+                    // Map the methods from the ExtensionPoint's methods spec (interface)
+                    // to this implementor's methods
+                    val mappedMethods = HashMap<MethodSpec, Method>().apply {
+                        extPoint.spec.forEach { it ->
+                            val spec = it.key
 
+                            put(
+                                spec,
+                                member.declaredMemberFunctions.find {
+                                    MethodSpec.fromMethod(it.javaMethod!!) == spec
+                                }?.javaMethod
+                                    ?: throw AnnotationProcessingException(
+                                        "Cannot find a method in the implementor of an extension " +
+                                        "point ${member.qualifiedName} with the spec $spec"
+                                    )
+                            )
+                        }
+                    }
+
+                    // and we can create the proxy calls that uses the mapped methods to determine
+                    // which function should it call
                     extPoint.implementors.add(
                         Proxy.newProxyInstance(
                             javaClass.classLoader,
                             arrayOf(member.java)
                         ) { obj, method, args ->
-                            val specMethod = extPoint.spec
-                                .getDeclaredMethod(
-                                    method.name,
-                                    *args.map { it.javaClass }.toTypedArray()
-                                )
-
-                            specMethod.invoke(obj, *args)
+                            mappedMethods[
+                                MethodSpec.fromMethod(method)
+                            ]!!.invoke(obj, *args)
                         }
                     )
                 }
 
-            } else if (member.java.isInterface && member.hasAnnotation<ExtensionPoint>()) {
+            } else if (member.hasAnnotation<ExtensionPoint>()) {
+                if (!member.java.isInterface)
+                    throw AnnotationProcessingException(
+                        "Class ${member.qualifiedName} is annotated as an extension point. But " +
+                        "its not an interface. Only interfaces can become an extension point"
+                    )
+
                 val annotation = member.findAnnotation<ExtensionPoint>() ?: return
                 val extPointName =
                     (if (annotation.name.isNotEmpty()) member.simpleName else annotation.name)!!
 
-                putResult(communications, extPointName, ExtensionPointCommunication(member.java))
+                putResult(
+                    communications,
+                    extPointName,
+                    ExtensionPointCommunication(
+                        member.declaredMemberFunctions.associate {
+                            val method = it.javaMethod!!
+                            Pair(MethodSpec.fromMethod(method), method)
+                        }
+                    )
+                )
             }
         }
     }
