@@ -233,7 +233,7 @@ object ModuleRuntimeAnnotationProcessor {
 
                 val annotation = member.findAnnotation<ExtensionPoint>() ?: return
                 val extPointName =
-                    (if (annotation.name.isNotEmpty()) member.simpleName else annotation.name)!!
+                    (if (annotation.name.isEmpty()) member.simpleName else annotation.name)!!
 
                 putResult(
                     communications,
