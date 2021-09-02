@@ -19,7 +19,8 @@ object ModuleLoader {
             // Check if the requested namespace already exists
             if (NamespaceResolver.resolveNamespace("/${it.namespace}") != null) {
                 // the same name already exists
-                val err = "Failed to load module with the namespace ${it.namespace} since that namespace already exists"
+                val err =
+                    "Failed to load module with the namespace ${it.namespace} since that namespace already exists"
                 Log.w(TAG, err)
                 errorCallback(err)
 
@@ -69,7 +70,11 @@ object ModuleLoader {
 
     private var multipleDexClassLoader: MultipleDexClassLoader? = null
 
-    private fun newModuleInstance(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String): Module? {
+    private fun newModuleInstance(
+        module: ModuleMetadata,
+        errorCallback: (String) -> Unit,
+        codeCacheDir: String
+    ): Module? {
         if (multipleDexClassLoader == null) {
             multipleDexClassLoader = MultipleDexClassLoader(codeCacheDir, null)
         }
@@ -89,3 +94,4 @@ object ModuleLoader {
             null
         }
     }
+}
