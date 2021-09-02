@@ -105,7 +105,7 @@ object ModuleManager {
      * @throws ModuleDependencyResolver.ModuleDependencyNotFoundException Will be thrown if a module cannot find it's needed dependency
      */
     @Throws(ModuleDependencyResolver.ModuleDependencyNotFoundException::class)
-    fun loadModules(errorCallback: (String) -> Unit, codeCacheDir: String) {
+    fun loadModules(errorCallback: (String) -> Unit) {
         val enabledModules = listEnabledModules()
 
         // make sure to load them correctly with their dependencies
@@ -113,7 +113,7 @@ object ModuleManager {
             .orderModules()
 
         orderedModules.forEach {
-            ModuleLoader.loadModule(it, errorCallback, codeCacheDir)
+            ModuleLoader.loadModule(it, errorCallback)
         }
 
         ModuleLoader.finishLoadModules()

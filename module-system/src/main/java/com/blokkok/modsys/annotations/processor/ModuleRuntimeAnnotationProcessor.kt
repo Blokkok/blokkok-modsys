@@ -2,6 +2,7 @@ package com.blokkok.modsys.annotations.processor
 
 import android.annotation.SuppressLint
 import android.os.Build
+import com.blokkok.modsys.ModuleLoader
 import com.blokkok.modsys.communication.Communication
 import com.blokkok.modsys.communication.ExtensionPointCommunication
 import com.blokkok.modsys.communication.FunctionCommunication
@@ -214,7 +215,7 @@ object ModuleRuntimeAnnotationProcessor {
                     // which function should it call
                     extPoint.implementors.add(
                         Proxy.newProxyInstance(
-                            javaClass.classLoader,
+                            ModuleLoader.moduleClassLoader.loader,
                             arrayOf(member.java)
                         ) { obj, method, args ->
                             mappedMethods[

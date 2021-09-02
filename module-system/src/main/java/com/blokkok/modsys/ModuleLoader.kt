@@ -4,7 +4,6 @@ import android.util.Log
 import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.models.ModuleMetadata
 import com.blokkok.modsys.modinter.Module
-import dalvik.system.DexClassLoader
 
 object ModuleLoader {
     private const val TAG = "ModuleLoader"
@@ -12,10 +11,10 @@ object ModuleLoader {
     private val loadedModules = HashMap<String, ModuleContainer>()
     private val loadedModulesMetadata = HashMap<String, ModuleMetadata>()
 
-    fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit, codeCacheDir: String) {
+    fun loadModule(module: ModuleMetadata, errorCallback: (String) -> Unit) {
         if (module.id in loadedModules) return
 
-        newModuleInstance(module, errorCallback, codeCacheDir)?.let {
+        newModuleInstance(module, errorCallback)?.let {
             // Check if the requested namespace already exists
             if (NamespaceResolver.resolveNamespace("/${it.namespace}") != null) {
                 // the same name already exists
@@ -68,18 +67,13 @@ object ModuleLoader {
     fun listLoadedModules(): List<String> = loadedModules.keys.toList()
     fun listLoadedModulesMetadata(): List<ModuleMetadata> = loadedModulesMetadata.values.toList()
 
-    private var multipleDexClassLoader: MultipleDexClassLoader? = null
+    val moduleClassLoader: MultipleDexClassLoader by lazy { MultipleDexClassLoader() }
 
     private fun newModuleInstance(
         module: ModuleMetadata,
-        errorCallback: (String) -> Unit,
-        codeCacheDir: String
+        errorCallback: (String) -> Unit
     ): Module? {
-        if (multipleDexClassLoader == null) {
-            multipleDexClassLoader = MultipleDexClassLoader(codeCacheDir, null)
-        }
-
-        val loader = multipleDexClassLoader!!.loadDex(module.jarPath)
+        val loader = moduleClassLoader.loadDex(module.jarPath)
 
         return try {
             val moduleClass = loader.loadClass(module.classpath)

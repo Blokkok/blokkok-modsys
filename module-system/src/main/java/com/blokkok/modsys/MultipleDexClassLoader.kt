@@ -5,12 +5,9 @@ import dalvik.system.DexClassLoader
 /**
  * Basically a class to load multiple dex files
  */
-class MultipleDexClassLoader(
-    private val optimizedDirectory: String?,
-    private val librarySearchPath: String?,
-) {
-    private val loader by lazy {
-        DexClassLoader("", optimizedDirectory, librarySearchPath, javaClass.classLoader)
+class MultipleDexClassLoader(private val librarySearchPath: String? = null) {
+    val loader by lazy {
+        DexClassLoader("", null, librarySearchPath, javaClass.classLoader)
     }
 
     // we're calling an internal API for adding the dex path, might not be good, I'll try other methods
