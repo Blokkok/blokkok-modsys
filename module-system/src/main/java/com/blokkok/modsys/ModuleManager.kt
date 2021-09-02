@@ -135,6 +135,7 @@ object ModuleManager {
      * Imports a module from a zip input stream of a module zip file
      */
     @Throws(
+        IOException::class,
         SameIDException::class,
         IncompatibleModSysVersion::class,
         InvalidAssetsFolderLocation::class,
@@ -248,6 +249,7 @@ object ModuleManager {
     private fun listEnabledModules(): List<ModuleMetadata> =
         listModules().values.filter { it.enabled }
 
+    @Throws(IOException::class)
     private fun unpackZip(
         zipInputStream: ZipInputStream,
         outputPath: File,
