@@ -172,7 +172,7 @@ object ModuleRuntimeAnnotationProcessor {
                     namespace.communications.putAll(nmCommunications)
 
                     // now add the new namespace to our result
-                    putResult(nmCommunications, namespaceName, namespace)
+                    putResult(communications, namespaceName, namespace)
 
                 } else if (member.hasAnnotation<ImplementsExtensionPoint>()) {
                     val annotation = member.findAnnotation<ImplementsExtensionPoint>() ?: return
