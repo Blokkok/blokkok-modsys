@@ -218,9 +218,15 @@ object ModuleRuntimeAnnotationProcessor {
                             ModuleLoader.moduleClassLoader.loader,
                             arrayOf(extPoint.specClass)
                         ) { obj, method, args ->
-                            mappedMethods[
-                                MethodSpec.fromMethod(method)
-                            ]!!.invoke(obj, *args)
+                            if (args == null) {
+                                mappedMethods[
+                                        MethodSpec.fromMethod(method)
+                                ]!!.invoke(obj)
+                            } else {
+                                mappedMethods[
+                                        MethodSpec.fromMethod(method)
+                                ]!!.invoke(obj, *args)
+                            }
                         }
                     )
                 }
