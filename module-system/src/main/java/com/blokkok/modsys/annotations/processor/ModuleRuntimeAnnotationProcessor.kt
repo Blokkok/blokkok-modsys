@@ -260,6 +260,7 @@ object ModuleRuntimeAnnotationProcessor {
     /**
      * Runtime annotation processor for java-made modules
      */
+    // TODO: 9/4/21 implement extension point and namespace in java
     private object JavaProcessor {
         @Throws(UnsupportedOperationException::class, AnnotationProcessingException::class)
         fun process(
