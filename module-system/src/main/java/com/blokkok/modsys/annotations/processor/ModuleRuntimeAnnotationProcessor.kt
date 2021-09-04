@@ -217,15 +217,15 @@ object ModuleRuntimeAnnotationProcessor {
                         Proxy.newProxyInstance(
                             ModuleLoader.moduleClassLoader.loader,
                             arrayOf(extPoint.specClass)
-                        ) { obj, method, args ->
+                        ) { _, method, args ->
                             if (args == null) {
                                 mappedMethods[
                                         MethodSpec.fromMethod(method)
-                                ]!!.invoke(obj)
+                                ]!!.invoke(member.objectInstance!!)
                             } else {
                                 mappedMethods[
                                         MethodSpec.fromMethod(method)
-                                ]!!.invoke(obj, *args)
+                                ]!!.invoke(member.objectInstance!!, *args)
                             }
                         }
                     )
