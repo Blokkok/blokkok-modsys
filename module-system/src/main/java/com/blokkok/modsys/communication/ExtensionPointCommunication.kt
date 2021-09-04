@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 
 data class ExtensionPointCommunication(
     val spec: Map<MethodSpec, Method>,
+    val specClass: Class<*>,
     val implementors: ArrayList<Any> = ArrayList(),
 ) : Communication() {
     override val name: String = "extension point"

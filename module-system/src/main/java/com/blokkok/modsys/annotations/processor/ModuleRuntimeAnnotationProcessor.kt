@@ -216,7 +216,7 @@ object ModuleRuntimeAnnotationProcessor {
                     extPoint.implementors.add(
                         Proxy.newProxyInstance(
                             ModuleLoader.moduleClassLoader.loader,
-                            arrayOf(member.java)
+                            arrayOf(extPoint.specClass)
                         ) { obj, method, args ->
                             mappedMethods[
                                 MethodSpec.fromMethod(method)
@@ -243,7 +243,8 @@ object ModuleRuntimeAnnotationProcessor {
                         member.declaredMemberFunctions.associate {
                             val method = it.javaMethod!!
                             Pair(MethodSpec.fromMethod(method), method)
-                        }
+                        },
+                        member.java
                     )
                 )
             }
