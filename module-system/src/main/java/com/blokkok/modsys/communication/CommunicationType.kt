@@ -2,5 +2,6 @@ package com.blokkok.modsys.communication
 
 enum class CommunicationType {
     FUNCTION,
-    BROADCAST
+    BROADCAST,
+    EXTENSION_POINT
 }

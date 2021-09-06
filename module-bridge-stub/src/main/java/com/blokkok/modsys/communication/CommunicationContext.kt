@@ -2,7 +2,7 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
-import com.blokkok.modsys.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.Namespace
 
 /**
  * Communication API entry point
@@ -168,6 +168,12 @@ class CommunicationContext(
      * @param flagName The flag name you wanted to get every modules' namespace that has the flag name
      */
     fun getFlagNamespaces(flagName: String): List<String> {
+        throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
+    }
+
+    // Extension points ============================================================================
+
+    fun <T> retrieveExtensions(clazz: Class<T>): ArrayList<T>? {
         throw RuntimeException("Stub! This jar is supposed to be compile only, do not use it as an implementation")
     }
 }

@@ -3,12 +3,12 @@ package com.blokkok.modsys
 import android.content.Context
 import android.util.Log
 import com.blokkok.modsys.communication.CommunicationContext
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.exceptions.IncompatibleModSysVersion
 import com.blokkok.modsys.exceptions.InvalidAssetsFolderLocation
 import com.blokkok.modsys.exceptions.SameIDException
 import com.blokkok.modsys.models.ModuleManifest
 import com.blokkok.modsys.models.ModuleMetadata
-import com.blokkok.modsys.namespace.NamespaceResolver
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -105,7 +105,7 @@ object ModuleManager {
      * @throws ModuleDependencyResolver.ModuleDependencyNotFoundException Will be thrown if a module cannot find it's needed dependency
      */
     @Throws(ModuleDependencyResolver.ModuleDependencyNotFoundException::class)
-    fun loadModules(errorCallback: (String) -> Unit, codeCacheDir: String) {
+    fun loadModules(errorCallback: (String) -> Unit) {
         val enabledModules = listEnabledModules()
 
         // make sure to load them correctly with their dependencies
@@ -113,7 +113,7 @@ object ModuleManager {
             .orderModules()
 
         orderedModules.forEach {
-            ModuleLoader.loadModule(it, errorCallback, codeCacheDir)
+            ModuleLoader.loadModule(it, errorCallback)
         }
 
         ModuleLoader.finishLoadModules()

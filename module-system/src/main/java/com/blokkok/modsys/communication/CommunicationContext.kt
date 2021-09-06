@@ -2,15 +2,16 @@ package com.blokkok.modsys.communication
 
 import com.blokkok.modsys.ModuleFlagsManager
 import com.blokkok.modsys.capitalizeCompat
+import com.blokkok.modsys.communication.namespace.Namespace
+import com.blokkok.modsys.communication.namespace.NamespaceResolver
 import com.blokkok.modsys.communication.objects.Broadcaster
 import com.blokkok.modsys.communication.objects.Subscription
 import com.blokkok.modsys.isCommunicationName
+import com.blokkok.modsys.modinter.annotations.ExtensionPoint
 import com.blokkok.modsys.modinter.exception.AlreadyDefinedException
 import com.blokkok.modsys.modinter.exception.IllegalFlagAccessException
 import com.blokkok.modsys.modinter.exception.NotDefinedException
 import com.blokkok.modsys.modinter.exception.TypeException
-import com.blokkok.modsys.namespace.Namespace
-import com.blokkok.modsys.namespace.NamespaceResolver
 
 /**
  * Communication API entry point
@@ -155,5 +156,23 @@ class CommunicationContext(
         val modules = ModuleFlagsManager.getModulesWithFlag(flagName, claimedFlagIDs[flagName]!!)!!
 
         return modules.map { it.namespaceName }
+    }
+
+    // Extension point =============================================================================
+
+    fun <T> retrieveExtensions(clazz: Class<T>): ArrayList<T>? {
+        // check if clazz has the annotation
+        val annotation = clazz.getAnnotation(ExtensionPoint::class.java) ?: return null
+
+        // get the name of the extension point
+        val name = if (annotation.name == "") clazz.simpleName else annotation.name
+
+        // get and check if there is that communication extension on the current namespace
+        val extPoint = namespace.communications[name] ?: return null
+        if (extPoint !is ExtensionPointCommunication) return null
+
+        @Suppress("UNCHECKED_CAST")
+        // ^^^ extPoint.implementors is never going to be anything else, we've done the checks above
+        return extPoint.implementors as ArrayList<T>
     }
 }
